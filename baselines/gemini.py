@@ -35,8 +35,13 @@ FALLBACK_MODELS = ["gemini-3.6-flash", "gemini-3.8-flash", "gemini-flash-latest"
 API = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 GRID = 1000
 
-GEN_CONFIG: dict = {}      # extra generationConfig for a run: {"thinkingConfig": {...}, "mediaResolution": "..."}, set by baselines.try_gemini
+GEN_CONFIG: dict = {}      # extra generationConfig for a run: {"thinkingConfig": {...}, "mediaResolution": "..."}, set by baselines.try_gemini or CLI
 LAST_USAGE: dict = {}      # the token counts Google reported for the most recent request
+
+
+def thinking_config(value: str) -> dict:
+    """--thinking 0 / 1024 (a budget, Gemini 2.5) or minimal / low / medium / high (a level, Gemini 3 and later)."""
+    return {"thinkingBudget": int(value)} if value.lstrip("-").isdigit() else {"thinkingLevel": value}
 
 
 def get_key() -> str | None:
@@ -65,21 +70,31 @@ ELEMENTS
 - "text": one element per node you would put in a graph. A multi-word phrase
   that belongs together ("mindset of posture", "the idea of transitions") is ONE
   element, even across line breaks. Transcribe exactly as written; keep case.
-  underline: true if any part of it is underlined.
+  Do not merge two distinct phrases into one element if an arrow connects them
+  (e.g. "a connecting thread." and "telling a story" are separate nodes).
+  Preserve trailing periods; do not add question marks or punctuation unless clearly written.
+  Important: Words or phrases written along an arrow shaft (e.g. "TRY TO", "to")
+  belong to the arrow as a connector label. Do NOT create a text element for words
+  that label an arrow.
+  underline: true if any part of it is underlined. Inspect closely beneath each
+  word: even faint, light, or single underline pen strokes mean underline: true.
   caps: true if it is written in capitals for emphasis (not just a capital first letter).
 - "shape": a closed drawn shape (circle, box, blob) that acts as a hub or container.
-  contains: ids of the elements inside it.
-- "doodle": an illustration or stray drawing that is not words. Box it; never
-  transcribe it as text. A drawn letter-like mark sitting next to a word may be a doodle.
+  contains: ids of all elements (both text and doodles) enclosed inside it.
+- "doodle": an illustration, icon, symbol, or stray drawing that is not words. Box it;
+  never transcribe it as text. If a small drawn circle, icon, or bullet 'O' sits
+  beside a word (e.g. next to 'core'), box it as a separate doodle; do not drop it
+  and do not merge it into the word's text (transcribe 'core', not 'Ocore').
 
 LINKS (every arrow)
-- from -> to in the direction the ARROWHEAD points. An arrow may point at a shape.
+- from -> to in the direction the ARROWHEAD points. An arrow may connect elements, or
+  start from / point at a container shape's border.
 - kind:
   "flow": an ordinary arrow from concept to concept.
   "hook": a short curled arrow meaning "belongs to / elaborates".
-  "connector": an arrow with a word or phrase written on or along it
-     ("A --to--> B"). Put that word in label, set caps/underline on the link if
-     the word has them, and do NOT also add the word as a text element.
+  "connector": an arrow with a word or phrase written on or along its shaft
+     ("A --to--> B", "A --TRY TO--> B"). Put that word in label, set caps/underline
+     on the link if the word has them, and do NOT also add the word as a text element.
 - If an endpoint is ambiguous, put your second choice in from_alt / to_alt.
 - confidence: 0-1, how sure you are of both endpoints.
 
@@ -309,7 +324,14 @@ def main(argv=None) -> int:
     ap.add_argument("--model", default=os.environ.get("GEMINI_MODEL", DEFAULT_MODEL))
     ap.add_argument("--only", nargs="*", help="page ids to run, e.g. page-01")
     ap.add_argument("--force", action="store_true", help="re-run pages that already have a prediction")
+    ap.add_argument("--thinking", default="low", help="how much the model may think: 0 or budget, or minimal/low/medium/high (default: low)")
+    ap.add_argument("--resolution", choices=["low", "medium", "high"], help="media resolution (low, medium, high)")
     a = ap.parse_args(argv)
+
+    if a.thinking and a.thinking.lower() not in ("none", "off"):
+        GEN_CONFIG.setdefault("thinkingConfig", thinking_config(a.thinking))
+    if a.resolution:
+        GEN_CONFIG.setdefault("mediaResolution", f"MEDIA_RESOLUTION_{a.resolution.upper()}")
 
     key = get_key()
     if not key:

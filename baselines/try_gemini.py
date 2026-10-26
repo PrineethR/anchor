@@ -56,9 +56,7 @@ def cost(model: str, usage: dict) -> float | None:
     return (usage.get("promptTokenCount", 0) * price_in + out_tokens * price_out) / 1_000_000
 
 
-def thinking_config(value: str) -> dict:
-    """--thinking 0 / 1024 (a budget, Gemini 2.5) or minimal / low / medium / high (a level, Gemini 3 and later)."""
-    return {"thinkingBudget": int(value)} if value.lstrip("-").isdigit() else {"thinkingLevel": value}
+thinking_config = gemini.thinking_config
 
 
 GET_A_KEY = """\

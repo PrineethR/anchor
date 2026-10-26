@@ -10,9 +10,9 @@
       "type": "text",
       "bbox": [
         46,
-        51,
-        65,
-        29
+        47,
+        66,
+        26
       ],
       "text": "Transition",
       "underline": false,
@@ -24,8 +24,8 @@
       "bbox": [
         118,
         89,
-        63,
-        29
+        64,
+        27
       ],
       "text": "curiosity",
       "underline": false,
@@ -35,48 +35,46 @@
       "id": "t3",
       "type": "text",
       "bbox": [
-        53,
-        212,
-        49,
-        25
-      ],
-      "text": "TRY TO",
-      "underline": false,
-      "caps": true
-    },
-    {
-      "id": "t4",
-      "type": "text",
-      "bbox": [
-        85,
-        247,
-        63,
-        47
+        107,
+        253,
+        35,
+        24
       ],
       "text": "core",
       "underline": false,
       "caps": false
     },
     {
-      "id": "s1",
-      "type": "shape",
+      "id": "d1",
+      "type": "doodle",
       "bbox": [
-        62,
-        220,
-        122,
-        163
-      ],
-      "contains": [
-        "t4"
+        85,
+        247,
+        22,
+        50
       ]
     },
     {
-      "id": "t5",
+      "id": "s1",
+      "type": "shape",
+      "bbox": [
+        61,
+        217,
+        124,
+        168
+      ],
+      "contains": [
+        "t3",
+        "d1"
+      ]
+    },
+    {
+      "id": "t4",
       "type": "text",
       "bbox": [
         211,
         221,
-        72,
+        73,
         50
       ],
       "text": "peripheral\nunits",
@@ -84,41 +82,54 @@
       "caps": false
     },
     {
-      "id": "t6",
+      "id": "t5",
       "type": "text",
       "bbox": [
-        107,
-        511,
-        99,
-        86
+        109,
+        512,
+        103,
+        85
       ],
       "text": "mindset\nof posture.",
-      "underline": false,
+      "underline": true,
       "caps": false
     },
     {
-      "id": "t7",
+      "id": "t6",
       "type": "text",
       "bbox": [
         230,
-        321,
-        125,
-        101
+        323,
+        130,
+        97
       ],
       "text": "the idea\nof transitions",
       "underline": true,
       "caps": false
     },
     {
-      "id": "t8",
+      "id": "t7",
       "type": "text",
       "bbox": [
         401,
-        229,
-        123,
-        57
+        230,
+        125,
+        56
       ],
       "text": "transdisciplinarity",
+      "underline": false,
+      "caps": false
+    },
+    {
+      "id": "t8",
+      "type": "text",
+      "bbox": [
+        447,
+        321,
+        133,
+        72
+      ],
+      "text": "stay grounded.",
       "underline": false,
       "caps": false
     },
@@ -126,12 +137,12 @@
       "id": "t9",
       "type": "text",
       "bbox": [
-        449,
-        321,
-        125,
-        70
+        525,
+        66,
+        58,
+        37
       ],
-      "text": "stay grounded.",
+      "text": "tangible",
       "underline": false,
       "caps": false
     },
@@ -139,12 +150,12 @@
       "id": "t10",
       "type": "text",
       "bbox": [
-        331,
-        471,
-        84,
-        53
+        666,
+        89,
+        76,
+        33
       ],
-      "text": "looking into\nEU.",
+      "text": "intangible",
       "underline": false,
       "caps": false
     },
@@ -152,12 +163,12 @@
       "id": "t11",
       "type": "text",
       "bbox": [
-        381,
-        570,
-        50,
-        58
+        805,
+        35,
+        141,
+        120
       ],
-      "text": "PhDs in\nDesign",
+      "text": "the way\nwe think\nabout\ndesign\n& society.",
       "underline": true,
       "caps": false
     },
@@ -165,74 +176,9 @@
       "id": "t12",
       "type": "text",
       "bbox": [
-        418,
-        669,
-        108,
-        61
-      ],
-      "text": "a connecting\nthread.",
-      "underline": true,
-      "caps": false
-    },
-    {
-      "id": "t13",
-      "type": "text",
-      "bbox": [
-        582,
-        594,
-        135,
-        43
-      ],
-      "text": "telling a story",
-      "underline": false,
-      "caps": false
-    },
-    {
-      "id": "t14",
-      "type": "text",
-      "bbox": [
-        526,
-        64,
-        56,
-        31
-      ],
-      "text": "tangible",
-      "underline": false,
-      "caps": false
-    },
-    {
-      "id": "t15",
-      "type": "text",
-      "bbox": [
-        666,
-        89,
-        74,
-        29
-      ],
-      "text": "intangible",
-      "underline": false,
-      "caps": false
-    },
-    {
-      "id": "t16",
-      "type": "text",
-      "bbox": [
-        804,
-        34,
-        138,
-        121
-      ],
-      "text": "the way\nwe think\nabout\ndesign\n& society.",
-      "underline": true,
-      "caps": false
-    },
-    {
-      "id": "t17",
-      "type": "text",
-      "bbox": [
-        730,
+        729,
         287,
-        34,
+        38,
         26
       ],
       "text": "GAPS",
@@ -240,15 +186,80 @@
       "caps": true
     },
     {
-      "id": "t18",
+      "id": "t13",
       "type": "text",
       "bbox": [
         807,
-        273,
-        81,
-        30
+        278,
+        84,
+        25
       ],
       "text": "framework.",
+      "underline": true,
+      "caps": false
+    },
+    {
+      "id": "t14",
+      "type": "text",
+      "bbox": [
+        700,
+        386,
+        70,
+        31
+      ],
+      "text": "CRITIQUE",
+      "underline": true,
+      "caps": true
+    },
+    {
+      "id": "t15",
+      "type": "text",
+      "bbox": [
+        835,
+        373,
+        116,
+        58
+      ],
+      "text": "of transition\ndesign.",
+      "underline": true,
+      "caps": false
+    },
+    {
+      "id": "t16",
+      "type": "text",
+      "bbox": [
+        331,
+        471,
+        86,
+        55
+      ],
+      "text": "looking into\nEU.",
+      "underline": true,
+      "caps": false
+    },
+    {
+      "id": "t17",
+      "type": "text",
+      "bbox": [
+        387,
+        573,
+        46,
+        57
+      ],
+      "text": "PhDs in\nDesign",
+      "underline": true,
+      "caps": false
+    },
+    {
+      "id": "t18",
+      "type": "text",
+      "bbox": [
+        419,
+        667,
+        108,
+        63
+      ],
+      "text": "a connecting\nthread.",
       "underline": true,
       "caps": false
     },
@@ -256,25 +267,25 @@
       "id": "t19",
       "type": "text",
       "bbox": [
-        701,
-        384,
-        71,
-        35
+        582,
+        592,
+        137,
+        47
       ],
-      "text": "CRITIQUE",
+      "text": "telling a story",
       "underline": false,
-      "caps": true
+      "caps": false
     },
     {
       "id": "t20",
       "type": "text",
       "bbox": [
-        832,
-        374,
-        103,
-        56
+        38,
+        615,
+        79,
+        103
       ],
-      "text": "of transition\ndesign",
+      "text": "Add ?\nLuis\nGarcia",
       "underline": true,
       "caps": false
     },
@@ -282,50 +293,27 @@
       "id": "t21",
       "type": "text",
       "bbox": [
-        735,
-        720,
-        136,
-        185
-      ],
-      "text": "PLAY\nis\nTRANSITION\n&\nTRANSITION\nis\nPLAY",
-      "underline": false,
-      "caps": true
-    },
-    {
-      "id": "d1",
-      "type": "doodle",
-      "bbox": [
-        799,
-        862,
-        44,
-        12
-      ]
-    },
-    {
-      "id": "t22",
-      "type": "text",
-      "bbox": [
-        38,
-        621,
-        82,
-        97
-      ],
-      "text": "Add?\nLuis\nGarcia",
-      "underline": false,
-      "caps": false
-    },
-    {
-      "id": "t23",
-      "type": "text",
-      "bbox": [
-        66,
+        63,
         759,
-        48,
+        44,
         72
       ],
       "text": "PhDs\nin\nHCI",
       "underline": false,
       "caps": false
+    },
+    {
+      "id": "t22",
+      "type": "text",
+      "bbox": [
+        735,
+        720,
+        136,
+        183
+      ],
+      "text": "PLAY\nis\nTRANSITION\n&\nTRANSITION\nis\nPLAY",
+      "underline": true,
+      "caps": true
     }
   ],
   "links": [
@@ -338,17 +326,20 @@
     },
     {
       "id": "l2",
-      "kind": "flow",
+      "kind": "connector",
       "from": "t1",
       "to": "s1",
+      "label": "TRY TO",
+      "caps": true,
+      "underline": false,
       "confidence": 0.95
     },
     {
       "id": "l3",
       "kind": "flow",
-      "from": "t3",
-      "to": "s1",
-      "confidence": 0.9
+      "from": "s1",
+      "to": "t4",
+      "confidence": 0.95
     },
     {
       "id": "l4",
@@ -360,8 +351,8 @@
     {
       "id": "l5",
       "kind": "flow",
-      "from": "s1",
-      "to": "t6",
+      "from": "t6",
+      "to": "t7",
       "confidence": 0.95
     },
     {
@@ -373,80 +364,70 @@
     },
     {
       "id": "l7",
-      "kind": "flow",
-      "from": "t8",
-      "to": "t9",
+      "kind": "connector",
+      "from": "t9",
+      "to": "t10",
+      "label": "to",
+      "caps": false,
+      "underline": false,
       "confidence": 0.95
     },
     {
       "id": "l8",
       "kind": "flow",
       "from": "t10",
-      "to": "t11",
-      "confidence": 0.95
-    },
-    {
-      "id": "l9",
-      "kind": "connector",
-      "from": "t14",
-      "to": "t15",
-      "label": "to",
-      "caps": false,
-      "underline": false,
-      "confidence": 0.9
-    },
-    {
-      "id": "l10",
-      "kind": "flow",
-      "from": "t15",
       "to": [
         {
-          "id": "t17",
+          "id": "t12",
           "confidence": 0.8
         },
         {
-          "id": "t16",
+          "id": "t11",
           "confidence": 0.2
         }
       ],
       "confidence": 0.8
     },
     {
+      "id": "l9",
+      "kind": "flow",
+      "from": "t12",
+      "to": "t13",
+      "confidence": 0.95
+    },
+    {
+      "id": "l10",
+      "kind": "flow",
+      "from": "t12",
+      "to": "t14",
+      "confidence": 0.95
+    },
+    {
       "id": "l11",
       "kind": "flow",
-      "from": "t17",
-      "to": "t18",
+      "from": "t14",
+      "to": "t15",
       "confidence": 0.95
     },
     {
       "id": "l12",
       "kind": "flow",
-      "from": "t17",
-      "to": "t19",
+      "from": "t16",
+      "to": "t17",
       "confidence": 0.95
     },
     {
       "id": "l13",
-      "kind": "connector",
-      "from": "t19",
-      "to": "t20",
-      "label": "of",
-      "caps": false,
-      "underline": false,
+      "kind": "flow",
+      "from": "t18",
+      "to": "t19",
       "confidence": 0.95
     },
     {
       "id": "l14",
-      "kind": "hook",
-      "from": "t12",
-      "to": "t13",
-      "confidence": 0.9
-    },
-    {
-      "id": "l15",
       "kind": "flow",
-      "from": "t13",
-      "to": "t21",
+      "from": "t19",
+      "to": "t22",
       "confidence": 0.85
     }
   ]

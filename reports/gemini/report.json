@@ -1,39 +1,39 @@
 {
-  "when": "2026-10-26 14:20",
+  "when": "2026-10-26 14:52",
   "summary": {
     "pages": 1,
     "text": {
-      "detection_p": 0.9565217391304348,
+      "detection_p": 1.0,
       "detection_r": 1.0,
-      "detection_f1": 0.9777777777777777,
+      "detection_f1": 1.0,
       "cer_matched": 0.005797101449275362,
       "cer_end_to_end": 0.005797101449275362,
-      "exact_match_rate": 0.9090909090909091
+      "exact_match_rate": 0.9545454545454546
     },
     "links": {
-      "top1_p": 0.8666666666666667,
+      "top1_p": 0.9285714285714286,
       "top1_r": 0.9285714285714286,
-      "top1_f1": 0.896551724137931,
+      "top1_f1": 0.9285714285714286,
       "top2_recall": 0.9285714285714286,
       "reversed": 0,
-      "kind_accuracy": 0.8461538461538461,
+      "kind_accuracy": 1.0,
       "connector_label_accuracy": 1.0,
-      "mean_conf_correct": 0.9230769230769231,
-      "mean_conf_wrong": 0.925
+      "mean_conf_correct": 0.9307692307692308,
+      "mean_conf_wrong": 0.95
     },
     "emphasis": {
       "underline_p": 1.0,
-      "underline_r": 0.5384615384615384,
-      "underline_f1": 0.7000000000000001,
+      "underline_r": 0.9230769230769231,
+      "underline_f1": 0.9600000000000001,
       "caps_p": 0.75,
       "caps_r": 0.75,
       "caps_f1": 0.75,
       "shape_f1": 1.0,
-      "container_jaccard": 0.5
+      "container_jaccard": 1.0
     },
     "doodles": {
       "gold": 1,
-      "f1": 0.0,
+      "f1": 1.0,
       "read_as_text": 0
     }
   },
@@ -42,54 +42,44 @@
       "summary": {
         "pages": 1,
         "text": {
-          "detection_p": 0.9565217391304348,
+          "detection_p": 1.0,
           "detection_r": 1.0,
-          "detection_f1": 0.9777777777777777,
+          "detection_f1": 1.0,
           "cer_matched": 0.005797101449275362,
           "cer_end_to_end": 0.005797101449275362,
-          "exact_match_rate": 0.9090909090909091
+          "exact_match_rate": 0.9545454545454546
         },
         "links": {
-          "top1_p": 0.8666666666666667,
+          "top1_p": 0.9285714285714286,
           "top1_r": 0.9285714285714286,
-          "top1_f1": 0.896551724137931,
+          "top1_f1": 0.9285714285714286,
           "top2_recall": 0.9285714285714286,
           "reversed": 0,
-          "kind_accuracy": 0.8461538461538461,
+          "kind_accuracy": 1.0,
           "connector_label_accuracy": 1.0,
-          "mean_conf_correct": 0.9230769230769231,
-          "mean_conf_wrong": 0.925
+          "mean_conf_correct": 0.9307692307692308,
+          "mean_conf_wrong": 0.95
         },
         "emphasis": {
           "underline_p": 1.0,
-          "underline_r": 0.5384615384615384,
-          "underline_f1": 0.7000000000000001,
+          "underline_r": 0.9230769230769231,
+          "underline_f1": 0.9600000000000001,
           "caps_p": 0.75,
           "caps_r": 0.75,
           "caps_f1": 0.75,
           "shape_f1": 1.0,
-          "container_jaccard": 0.5
+          "container_jaccard": 1.0
         },
         "doodles": {
           "gold": 1,
-          "f1": 0.0,
+          "f1": 1.0,
           "read_as_text": 0
         }
       },
       "errors": [
-        "underline mindset 'mindset of posture.': gold=True pred=False",
-        "underline eu 'Looking into EU.': gold=True pred=False",
-        "misread add_luis: 'Add Luis Garcia' -> 'Add?\\nLuis\\nGarcia'",
-        "underline add_luis 'Add Luis Garcia': gold=True pred=False",
-        "underline critique 'CRITIQUE': gold=True pred=False",
-        "misread tdesign: 'of transition design.' -> 'of transition\\ndesign'",
-        "underline play 'PLAY is TRANSITION & TRANSITION is PLAY': gold=True pred=False",
-        "shape core_shape contents: gold=['core', 'doodle_o'] pred=['core']",
+        "misread add_luis: 'Add Luis Garcia' -> 'Add ?\\nLuis\\nGarcia'",
         "missed link transition->core (connector)",
-        "link kind thread->story (flow): pred hook",
-        "link kind critique->tdesign (flow): pred connector",
-        "spurious link transition->core_shape (flow)",
-        "spurious link pred:t3->core_shape (flow)"
+        "spurious link transition->core_shape (connector)"
       ]
     }
   }

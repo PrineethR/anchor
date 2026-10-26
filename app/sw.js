@@ -5,7 +5,7 @@
 // Updates: a new version installs beside the running one and WAITS. The page tells you it is ready, and only when you
 // accept does it take over (message 'skip-waiting'). Taking over mid-session would swap files out from under a page that
 // has already loaded half of the old ones. The very first install has nothing to wait for and starts at once.
-const VERSION = 'addc2dd2f5d7';
+const VERSION = 'cc915127a63f';
 const FILES = ["", "cloud/backend.js", "cloud/boot.js", "cloud/layout.js", "cloud/lib/firebase.js", "cloud/meaning.js", "cloud/notebook.js", "cloud/pageclean.js", "cloud/photo.js", "cloud/pwa.js", "cloud/pyish.js", "cloud/reader.js", "cloud/render.js", "config.json", "export-css.json", "icons/apple-touch-icon.png", "icons/favicon-32.png", "icons/icon-192.png", "icons/icon-512.png", "icons/icon-maskable-512.png", "manifest.webmanifest", "reader.json", "static/ds.js", "static/fonts/Figtree-italic.woff2", "static/fonts/Figtree-normal.woff2", "static/fonts/JetBrainsMono-normal.woff2", "static/fonts/Newsreader-italic.woff2", "static/fonts/Newsreader-normal.woff2", "static/noteworthy.css", "theme.json", "web/canvas.css", "web/canvas.js"];                       // paths from this folder; '' is the page itself
 const CACHE = 'makesense-' + VERSION;
 const SHARED = 'makesense-shared';             // photos shared to the app, until you say whether to add them (the page reads this name too)

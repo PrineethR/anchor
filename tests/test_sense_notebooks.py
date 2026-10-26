@@ -54,6 +54,29 @@ class CleanTests(unittest.TestCase):
         self.assertEqual((l["label"], l["caps"]), ("TO", True))
         self.assertNotIn("label", clean_links([link("1", "a", "b")], {"a", "b"})[0])
 
+    def test_graph_item_and_link_options_are_sanitized(self):
+        items = clean_items([
+            {**text("t1", "Heading", 0, 0), "size": "heading", "color": "sky", "align": "center"},
+            {"id": "s1", "type": "shape", "x": 10, "y": 10, "w": 100, "h": 80, "shape": "circle", "fill": "tint", "stroke": "solid", "color": "mint"},
+            {"id": "img1", "type": "image", "x": 0, "y": 0, "w": 200, "h": 150, "src": "photo.jpg", "rot": 3, "z_order": "front"},
+        ])
+        self.assertEqual(items[0]["size"], "heading")
+        self.assertEqual(items[0]["color"], "sky")
+        self.assertEqual(items[0]["align"], "center")
+        self.assertEqual(items[1]["shape"], "circle")
+        self.assertEqual(items[1]["fill"], "tint")
+        self.assertEqual(items[1]["stroke"], "solid")
+        self.assertEqual(items[1]["color"], "mint")
+        self.assertEqual(items[2]["rot"], 3)
+        self.assertEqual(items[2]["z_order"], "front")
+
+        links = clean_links([
+            {**link("l1", "t1", "s1"), "heads": "both", "stroke": "dotted", "color": "violet"}
+        ], {"t1", "s1"})
+        self.assertEqual(links[0]["heads"], "both")
+        self.assertEqual(links[0]["stroke"], "dotted")
+        self.assertEqual(links[0]["color"], "violet")
+
 
 class ToPageTests(unittest.TestCase):
     def test_bounds_become_the_page_and_coordinates_start_at_zero(self):

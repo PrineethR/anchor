@@ -34,6 +34,13 @@ ID = re.compile(r"^\d{8}-\d{6}-[0-9a-f]{4}$")
 ITEM_ID = re.compile(r"^[A-Za-z0-9_-]{1,40}$")
 ASSET = re.compile(r"^[A-Za-z0-9._-]{1,80}$")
 COLORS = ("sky", "blush", "mint", "violet", "tangerine", "berry")  # cover colours; sun stays "you underlined this"
+ITEM_COLORS = ("sky", "blush", "mint", "violet", "tangerine", "berry", "sun")
+TEXT_SIZES = ("body", "heading", "title")
+SHAPE_KINDS = ("blob", "box", "circle")
+SHAPE_FILLS = ("hatch", "tint", "outline")
+SHAPE_STROKES = ("dashed", "solid", "dotted")
+LINK_HEADS = ("forward", "both", "none")
+LINK_STROKES = ("solid", "dashed", "dotted")
 KINDS = {"flow", "hook", "connector"}
 MAX_ITEMS = 3000
 MAX_TEXT = 5000
@@ -81,11 +88,30 @@ def clean_items(raw) -> list[dict]:
         if i["type"] == "text":
             item.update(text=str(i.get("text", ""))[:MAX_TEXT], underline=bool(i.get("underline")), caps=bool(i.get("caps")),
                         fixed=bool(i.get("fixed")))  # fixed: you dragged its width; otherwise it sizes to its words
+            if i.get("size") in TEXT_SIZES:
+                item["size"] = i["size"]
+            if i.get("color") in ITEM_COLORS:
+                item["color"] = i["color"]
+            if i.get("align") in ("left", "center"):
+                item["align"] = i["align"]
+        if i["type"] == "shape":
+            if i.get("shape") in SHAPE_KINDS:
+                item["shape"] = i["shape"]
+            if i.get("fill") in SHAPE_FILLS:
+                item["fill"] = i["fill"]
+            if i.get("stroke") in SHAPE_STROKES:
+                item["stroke"] = i["stroke"]
+            if i.get("color") in ITEM_COLORS:
+                item["color"] = i["color"]
         if i["type"] == "image":
             src = str(i.get("src", ""))
             if not ASSET.match(src):
                 raise ValueError("A photo on the canvas points at a file that isn't allowed.")
             item["src"] = src
+            if i.get("rot") in (0, 1, 2, 3, "0", "1", "2", "3"):
+                item["rot"] = int(i["rot"]) % 4
+            if i.get("z_order") in ("back", "front"):
+                item["z_order"] = i["z_order"]
         out.append(item)
     return out
 
@@ -113,6 +139,12 @@ def clean_links(raw, ids: set[str]) -> list[dict]:
         if a is None or b is None or a == b:
             continue
         link = {"id": lid, "kind": l["kind"], "from": a, "to": b, "bend": _num(l.get("bend"), -2, 2)}
+        if l.get("heads") in LINK_HEADS:
+            link["heads"] = l["heads"]
+        if l.get("stroke") in LINK_STROKES:
+            link["stroke"] = l["stroke"]
+        if l.get("color") in ITEM_COLORS:
+            link["color"] = l["color"]
         label = str(l.get("label") or "").strip()[:200]
         if label:
             link.update(label=label, caps=bool(l.get("caps")), underline=bool(l.get("underline")))

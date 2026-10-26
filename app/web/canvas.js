@@ -35,6 +35,8 @@ export function mountCanvas(host, nb, ctx) {
         <svg class="cv-links" aria-hidden="true"><defs>
           <marker id="cv-ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path class="cv-ah" d="M0 0 10 5 0 10z"/></marker>
           <marker id="cv-ah-sel" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path class="cv-ah-sel" d="M0 0 10 5 0 10z"/></marker>
+          <marker id="cv-ah-start" viewBox="0 0 10 10" refX="2" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path class="cv-ah" d="M10 0 0 5 10 10z"/></marker>
+          <marker id="cv-ah-start-sel" viewBox="0 0 10 10" refX="2" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path class="cv-ah-sel" d="M10 0 0 5 10 10z"/></marker>
           <pattern id="cv-hatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="7" stroke="currentColor" stroke-width="1"/></pattern>
         </defs><g class="links"></g></svg>
         <div class="cv-layer" id="cv-back"></div>
@@ -140,9 +142,11 @@ export function mountCanvas(host, nb, ctx) {
     let el;
     if (it.type === 'shape') {
       const t = document.createElement('template');
-      t.innerHTML = `<svg class="it shape" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="false"><path class="fillp" d="${ds.SHAPES.blob[0]}" fill="url(#cv-hatch)" stroke="none" opacity=".55"/>
-        <path class="edge" d="${ds.SHAPES.blob[0]}" fill="none" stroke="var(--line-strong)" stroke-width="1.5" stroke-dasharray="6 5" vector-effect="non-scaling-stroke"/>
-        <path class="ring" d="${ds.SHAPES.blob[0]}" fill="none" stroke="transparent" stroke-width="12" vector-effect="non-scaling-stroke"/></svg>`;
+      const shapeKind = it.shape === 'box' ? 'square' : (it.shape || 'blob');
+      const shapePath = (ds.SHAPES[shapeKind] || ds.SHAPES.blob)[0];
+      t.innerHTML = `<svg class="it shape" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="false"><path class="fillp" d="${shapePath}" fill="url(#cv-hatch)" stroke="none" opacity=".55"/>
+        <path class="edge" d="${shapePath}" fill="none" stroke="var(--line-strong)" stroke-width="1.5" stroke-dasharray="6 5" vector-effect="non-scaling-stroke"/>
+        <path class="ring" d="${shapePath}" fill="none" stroke="transparent" stroke-width="12" vector-effect="non-scaling-stroke"/></svg>`;
       el = t.content.firstElementChild;
     } else if (it.type === 'image') {
       el = document.createElement('img'); el.alt = 'A photo of a page'; el.draggable = false;
@@ -159,8 +163,36 @@ export function mountCanvas(host, nb, ctx) {
       if (st.editing !== it.id && el.textContent !== it.text) el.textContent = it.text;
       el.classList.toggle('u', !!it.underline); el.classList.toggle('c', !!it.caps); el.classList.toggle('fixed', !!it.fixed);
       if (it.fixed) el.style.setProperty('--w', it.w + 'px'); else el.style.removeProperty('--w');
-    } else { el.style.width = it.w + 'px'; el.style.height = it.h + 'px'; }
-    el.style.zIndex = it.type === 'image' ? 0 : it.type === 'shape' ? 1 : 3;
+      ['size-heading', 'size-title'].forEach(c => el.classList.remove(c));
+      if (it.size === 'heading' || it.size === 'title') el.classList.add(`size-${it.size}`);
+      el.classList.toggle('align-center', it.align === 'center');
+      ['tint-sky', 'tint-mint', 'tint-blush', 'tint-sun', 'tint-violet', 'tint-tangerine', 'tint-berry'].forEach(c => el.classList.remove(c));
+      if (it.color) el.classList.add(`tint-${it.color}`);
+    } else if (it.type === 'shape') {
+      el.style.width = it.w + 'px'; el.style.height = it.h + 'px';
+      const shapeKind = it.shape === 'box' ? 'square' : (it.shape || 'blob');
+      const shapePath = (ds.SHAPES[shapeKind] || ds.SHAPES.blob)[0];
+      el.querySelectorAll('path').forEach(p => { if (p.getAttribute('d') !== shapePath) p.setAttribute('d', shapePath); });
+      ['fill-hatch', 'fill-tint', 'fill-outline'].forEach(c => el.classList.remove(c));
+      el.classList.add(`fill-${it.fill || 'hatch'}`);
+      ['stroke-dashed', 'stroke-solid', 'stroke-dotted'].forEach(c => el.classList.remove(c));
+      el.classList.add(`stroke-${it.stroke || 'dashed'}`);
+      ['tint-sky', 'tint-mint', 'tint-blush', 'tint-sun', 'tint-violet', 'tint-tangerine', 'tint-berry'].forEach(c => el.classList.remove(c));
+      if (it.color) el.classList.add(`tint-${it.color}`);
+    } else if (it.type === 'image') {
+      const rot = ((it.rot || 0) % 4 + 4) % 4;
+      if (rot === 1 || rot === 3) {
+        el.style.width = it.h + 'px';
+        el.style.height = it.w + 'px';
+        const dx = (it.w - it.h) / 2, dy = (it.h - it.w) / 2;
+        el.style.transform = `translate(${dx}px, ${dy}px) rotate(${rot * 90}deg)`;
+      } else {
+        el.style.width = it.w + 'px';
+        el.style.height = it.h + 'px';
+        el.style.transform = rot === 2 ? 'rotate(180deg)' : '';
+      }
+    }
+    el.style.zIndex = it.type === 'image' ? (it.z_order === 'front' ? 2 : 0) : it.type === 'shape' ? 1 : 3;
     el.classList.toggle('picked', st.sel.has(it.id)); el.classList.toggle('hl', st.hl.has(it.id));
     for (let n = 0; n < THREADS; n++) el.classList.remove('th' + n);
     if (it.type === 'text' && st.senseOpen) { const n = threadOf().get(it.id); if (n !== undefined) el.classList.add('th' + (n % THREADS)); }
@@ -198,7 +230,14 @@ export function mountCanvas(host, nb, ctx) {
       const g = linkGeom(l); if (!g) continue;
       const sel = st.selLink === l.id;
       const a = typeof l.from === 'string' ? th.get(l.from) : undefined;
-      svg += `<g class="lk ${l.kind}${sel ? ' picked' : ''}" data-lk="${l.id}"><path class="hit" d="${pathOf(g)}"/><path class="ln" d="${pathOf(g)}" marker-end="url(#${sel ? 'cv-ah-sel' : 'cv-ah'})"/></g>`;
+      const heads = l.heads || 'forward';
+      const showEnd = heads === 'forward' || heads === 'both';
+      const showStart = heads === 'both';
+      const markerEnd = showEnd ? ` marker-end="url(#${sel ? 'cv-ah-sel' : 'cv-ah'})"` : '';
+      const markerStart = showStart ? ` marker-start="url(#${sel ? 'cv-ah-start-sel' : 'cv-ah-start'})"` : '';
+      const strokeClass = l.stroke ? ` stroke-${l.stroke}` : (l.kind === 'hook' ? ' stroke-dashed' : ' stroke-solid');
+      const tintClass = l.color ? ` tint-${l.color}` : '';
+      svg += `<g class="lk ${l.kind}${strokeClass}${tintClass}${sel ? ' picked' : ''}" data-lk="${l.id}"><path class="hit" d="${pathOf(g)}"/><path class="ln" d="${pathOf(g)}"${markerStart}${markerEnd}/></g>`;
       if (l.label) labels += `<div class="alabel${l.underline ? ' u' : ''}${l.caps ? ' c' : ''}${sel ? ' picked' : ''}${st.senseOpen && a !== undefined ? ' th' + (a % THREADS) : ''}" data-lk="${l.id}" style="left:${g.mid[0]}px;top:${g.mid[1]}px;z-index:4">${esc(l.label)}</div>`;
     }
     if (st.preview) {
@@ -232,16 +271,72 @@ export function mountCanvas(host, nb, ctx) {
     const l = st.selLink && st.links.find(x => x.id === st.selLink);
     const its = selItems();
     let html = '';
+    const swatches = (cur, role = 'colour') => `<div class="cv-swatches" role="radiogroup" aria-label="${role}">${['default', 'sky', 'mint', 'blush', 'sun', 'violet', 'tangerine', 'berry'].map(c =>
+      `<button type="button" class="cv-swatch" role="radio" data-color="${c}" aria-label="${c}" aria-checked="${(cur || 'default') === c}" style="--sw:${c === 'default' ? 'var(--fg-2)' : 'var(--' + c + ')'}"></button>`).join('')}</div>`;
+
     if (l) {
-      html = `<div class="nw-seg nw-seg--sm" role="radiogroup" aria-label="Arrow type">${[['flow', 'Arrow'], ['hook', 'Aside'], ['connector', 'With a word']].map(([k, t]) =>
-        `<button type="button" role="radio" class="nw-seg__opt" data-kind="${k}" aria-checked="${l.kind === k}">${t}</button>`).join('')}</div>
+      const curHeads = l.heads || 'forward';
+      const curStroke = l.stroke || (l.kind === 'hook' ? 'dashed' : 'solid');
+      html = `
+        <div class="nw-seg nw-seg--sm" role="radiogroup" aria-label="Arrow type">${[['flow', 'Arrow'], ['hook', 'Aside'], ['connector', 'Word']].map(([k, t]) =>
+          `<button type="button" role="radio" class="nw-seg__opt" data-kind="${k}" aria-checked="${l.kind === k}">${t}</button>`).join('')}</div>
+        <div class="nw-seg nw-seg--sm" role="radiogroup" aria-label="Arrowhead">${[['forward', 'One way'], ['both', 'Two way'], ['none', 'Line']].map(([h, t]) =>
+          `<button type="button" role="radio" class="nw-seg__opt" data-heads="${h}" aria-checked="${curHeads === h}">${t}</button>`).join('')}</div>
+        <div class="nw-seg nw-seg--sm" role="radiogroup" aria-label="Stroke style">${[['solid', 'Solid'], ['dashed', 'Dashed'], ['dotted', 'Dotted']].map(([s, t]) =>
+          `<button type="button" role="radio" class="nw-seg__opt" data-arrow-stroke="${s}" aria-checked="${curStroke === s}">${t}</button>`).join('')}</div>
+        ${swatches(l.color, 'Arrow colour')}
+        <button type="button" class="nw-btn nw-btn--ghost nw-btn--sm" data-flip title="Flip arrow direction">${ico('refresh-cw', { size: 15, cls: 'nw-btn__icon' })}<span>Flip</span></button>
         ${l.kind === 'connector' ? `<input class="word" aria-label="The word on the arrow" placeholder="The word" value="${esc(l.label || '')}" maxlength="60">` : ''}
-        ${l.label ? `<button type="button" class="nw-chip${l.underline ? ' nw-chip--on' : ''}" data-flag="underline">Underlined</button><button type="button" class="nw-chip${l.caps ? ' nw-chip--on' : ''}" data-flag="caps">Capitals</button>` : ''}
+        ${l.label ? `<button type="button" class="nw-chip${l.underline ? ' nw-chip--on' : ''}" data-flag="underline">Underline</button><button type="button" class="nw-chip${l.caps ? ' nw-chip--on' : ''}" data-flag="caps">Caps</button>` : ''}
         <button type="button" class="nw-btn nw-btn--ghost nw-btn--sm" data-remove>${ico('trash-2', { size: 16, cls: 'nw-btn__icon' })}<span>Remove</span></button>`;
     } else if (its.length && !st.editing && st.tool === 'select') {
       const texts = its.filter(i => i.type === 'text');
-      if (texts.length) html += `<button type="button" class="nw-chip${texts.every(i => i.underline) ? ' nw-chip--on' : ''}" data-flag="underline">Underlined</button><button type="button" class="nw-chip${texts.every(i => i.caps) ? ' nw-chip--on' : ''}" data-flag="caps">Capitals</button>`;
-      html += `<button type="button" class="nw-btn nw-btn--ghost nw-btn--sm" data-remove>${ico('trash-2', { size: 16, cls: 'nw-btn__icon' })}<span>Remove${its.length > 1 ? ' ' + its.length : ''}</span></button>`;
+      const shapes = its.filter(i => i.type === 'shape');
+      const imgs = its.filter(i => i.type === 'image');
+
+      if (texts.length && !shapes.length && !imgs.length) {
+        const curSize = texts[0]?.size || 'body';
+        const curAlign = texts[0]?.align || 'left';
+        html = `
+          <div class="nw-seg nw-seg--sm" role="radiogroup" aria-label="Text size">${[['body', 'Body'], ['heading', 'Heading'], ['title', 'Title']].map(([s, t]) =>
+            `<button type="button" role="radio" class="nw-seg__opt" data-text-size="${s}" aria-checked="${curSize === s}">${t}</button>`).join('')}</div>
+          ${swatches(texts[0]?.color, 'Text colour')}
+          <div class="nw-seg nw-seg--sm" role="radiogroup" aria-label="Alignment">${[['left', 'Left'], ['center', 'Center']].map(([a, t]) =>
+            `<button type="button" role="radio" class="nw-seg__opt" data-align="${a}" aria-checked="${curAlign === a}">${t}</button>`).join('')}</div>
+          <button type="button" class="nw-chip${texts.every(i => i.underline) ? ' nw-chip--on' : ''}" data-flag="underline">Underline</button>
+          <button type="button" class="nw-chip${texts.every(i => i.caps) ? ' nw-chip--on' : ''}" data-flag="caps">Caps</button>
+          <button type="button" class="nw-btn nw-btn--ghost nw-btn--sm" data-duplicate>${ico('copy', { size: 15, cls: 'nw-btn__icon' })}<span>Duplicate</span></button>
+          <button type="button" class="nw-btn nw-btn--ghost nw-btn--sm" data-remove>${ico('trash-2', { size: 16, cls: 'nw-btn__icon' })}<span>Remove${its.length > 1 ? ' ' + its.length : ''}</span></button>`;
+      } else if (shapes.length && !texts.length && !imgs.length) {
+        const curShape = shapes[0]?.shape || 'blob';
+        const curFill = shapes[0]?.fill || 'hatch';
+        const curStroke = shapes[0]?.stroke || 'dashed';
+        html = `
+          <div class="nw-seg nw-seg--sm" role="radiogroup" aria-label="Shape silhouette">${[['blob', 'Blob'], ['box', 'Box'], ['circle', 'Circle']].map(([s, t]) =>
+            `<button type="button" role="radio" class="nw-seg__opt" data-shape="${s}" aria-checked="${curShape === s}">${t}</button>`).join('')}</div>
+          <div class="nw-seg nw-seg--sm" role="radiogroup" aria-label="Shape fill">${[['hatch', 'Hatch'], ['tint', 'Tint'], ['outline', 'Clear']].map(([f, t]) =>
+            `<button type="button" role="radio" class="nw-seg__opt" data-fill="${f}" aria-checked="${curFill === f}">${t}</button>`).join('')}</div>
+          <div class="nw-seg nw-seg--sm" role="radiogroup" aria-label="Stroke style">${[['dashed', 'Dashed'], ['solid', 'Solid'], ['dotted', 'Dotted']].map(([s, t]) =>
+            `<button type="button" role="radio" class="nw-seg__opt" data-shape-stroke="${s}" aria-checked="${curStroke === s}">${t}</button>`).join('')}</div>
+          ${swatches(shapes[0]?.color, 'Shape colour')}
+          <button type="button" class="nw-btn nw-btn--ghost nw-btn--sm" data-duplicate>${ico('copy', { size: 15, cls: 'nw-btn__icon' })}<span>Duplicate</span></button>
+          <button type="button" class="nw-btn nw-btn--ghost nw-btn--sm" data-remove>${ico('trash-2', { size: 16, cls: 'nw-btn__icon' })}<span>Remove${its.length > 1 ? ' ' + its.length : ''}</span></button>`;
+      } else if (imgs.length && !texts.length && !shapes.length) {
+        const isFront = imgs.some(i => i.z_order === 'front');
+        html = `
+          <button type="button" class="nw-btn nw-btn--ghost nw-btn--sm" data-rotate-img>${ico('rotate-cw', { size: 15, cls: 'nw-btn__icon' })}<span>Rotate</span></button>
+          <button type="button" class="nw-btn nw-btn--ghost nw-btn--sm" data-reset-aspect>${ico('maximize', { size: 15, cls: 'nw-btn__icon' })}<span>Fit aspect</span></button>
+          <button type="button" class="nw-chip${isFront ? ' nw-chip--on' : ''}" data-toggle-z>${isFront ? 'In front' : 'In back'}</button>
+          <button type="button" class="nw-btn nw-btn--ghost nw-btn--sm" data-duplicate>${ico('copy', { size: 15, cls: 'nw-btn__icon' })}<span>Duplicate</span></button>
+          <button type="button" class="nw-btn nw-btn--ghost nw-btn--sm" data-remove>${ico('trash-2', { size: 16, cls: 'nw-btn__icon' })}<span>Remove${its.length > 1 ? ' ' + its.length : ''}</span></button>`;
+      } else {
+        if (texts.length) {
+          html += `<button type="button" class="nw-chip${texts.every(i => i.underline) ? ' nw-chip--on' : ''}" data-flag="underline">Underline</button><button type="button" class="nw-chip${texts.every(i => i.caps) ? ' nw-chip--on' : ''}" data-flag="caps">Caps</button>`;
+        }
+        html += `
+          <button type="button" class="nw-btn nw-btn--ghost nw-btn--sm" data-duplicate>${ico('copy', { size: 15, cls: 'nw-btn__icon' })}<span>Duplicate</span></button>
+          <button type="button" class="nw-btn nw-btn--ghost nw-btn--sm" data-remove>${ico('trash-2', { size: 16, cls: 'nw-btn__icon' })}<span>Remove ${its.length}</span></button>`;
+      }
     }
     floatEl.hidden = !html;
     if (html && floatEl.dataset.html !== html) { floatEl.innerHTML = html; floatEl.dataset.html = html; }
@@ -588,13 +683,103 @@ export function mountCanvas(host, nb, ctx) {
   // floating toolbar actions
   floatEl.addEventListener('click', e => {
     const l = st.selLink && st.links.find(x => x.id === st.selLink);
-    const kind = e.target.closest('[data-kind]'), flag = e.target.closest('[data-flag]'), rm = e.target.closest('[data-remove]');
-    if (kind && l) { l.kind = kind.dataset.kind; if (l.kind !== 'connector') { /* keep the word if it has one */ } commit(); renderAll(); if (l.kind === 'connector') floatEl.querySelector('.word')?.focus(); }
-    else if (flag) {
-      const f = flag.dataset.flag;
-      if (l) l[f] = !l[f]; else { const ts = selItems().filter(i => i.type === 'text'), on = !ts.every(i => i[f]); ts.forEach(i => { i[f] = on; }); }
+    const its = selItems();
+    const texts = its.filter(i => i.type === 'text');
+    const shapes = its.filter(i => i.type === 'shape');
+    const imgs = its.filter(i => i.type === 'image');
+
+    const kind = e.target.closest('[data-kind]');
+    const heads = e.target.closest('[data-heads]');
+    const arrowStroke = e.target.closest('[data-arrow-stroke]');
+    const flip = e.target.closest('[data-flip]');
+    const textSize = e.target.closest('[data-text-size]');
+    const align = e.target.closest('[data-align]');
+    const shape = e.target.closest('[data-shape]');
+    const fill = e.target.closest('[data-fill]');
+    const shapeStroke = e.target.closest('[data-shape-stroke]');
+    const color = e.target.closest('[data-color]');
+    const rotateImg = e.target.closest('[data-rotate-img]');
+    const resetAspect = e.target.closest('[data-reset-aspect]');
+    const toggleZ = e.target.closest('[data-toggle-z]');
+    const duplicate = e.target.closest('[data-duplicate]');
+    const flag = e.target.closest('[data-flag]');
+    const rm = e.target.closest('[data-remove]');
+
+    if (kind && l) {
+      l.kind = kind.dataset.kind;
       commit(); renderAll();
-    } else if (rm) removeSelection();
+      if (l.kind === 'connector') floatEl.querySelector('.word')?.focus();
+    } else if (heads && l) {
+      l.heads = heads.dataset.heads;
+      commit(); renderAll();
+    } else if (arrowStroke && l) {
+      l.stroke = arrowStroke.dataset.arrowStroke;
+      commit(); renderAll();
+    } else if (flip && l) {
+      const tmp = l.from; l.from = l.to; l.to = tmp;
+      l.bend = -(l.bend || 0);
+      commit(); renderAll();
+    } else if (textSize && texts.length) {
+      const s = textSize.dataset.textSize;
+      texts.forEach(t => { if (s === 'body') delete t.size; else t.size = s; });
+      measure(); commit(); renderAll();
+    } else if (align && texts.length) {
+      const a = align.dataset.align;
+      texts.forEach(t => { if (a === 'left') delete t.align; else t.align = a; });
+      commit(); renderAll();
+    } else if (shape && shapes.length) {
+      const s = shape.dataset.shape;
+      shapes.forEach(sh => { if (s === 'blob') delete sh.shape; else sh.shape = s; });
+      commit(); renderAll();
+    } else if (fill && shapes.length) {
+      const f = fill.dataset.fill;
+      shapes.forEach(sh => { if (f === 'hatch') delete sh.fill; else sh.fill = f; });
+      commit(); renderAll();
+    } else if (shapeStroke && shapes.length) {
+      const s = shapeStroke.dataset.shapeStroke;
+      shapes.forEach(sh => { if (s === 'dashed') delete sh.stroke; else sh.stroke = s; });
+      commit(); renderAll();
+    } else if (color) {
+      const c = color.dataset.color;
+      if (l) {
+        if (c === 'default') delete l.color; else l.color = c;
+      } else if (texts.length) {
+        texts.forEach(t => { if (c === 'default') delete t.color; else t.color = c; });
+      } else if (shapes.length) {
+        shapes.forEach(sh => { if (c === 'default') delete sh.color; else sh.color = c; });
+      }
+      commit(); renderAll();
+    } else if (rotateImg && imgs.length) {
+      imgs.forEach(im => {
+        const tmp = im.w; im.w = im.h; im.h = tmp;
+        im.rot = (((im.rot || 0) + 1) % 4);
+      });
+      commit(); renderAll();
+    } else if (resetAspect && imgs.length) {
+      imgs.forEach(im => {
+        const el = els.get(im.id);
+        if (el?.naturalWidth && el?.naturalHeight) {
+          const isRot = (im.rot || 0) % 2 === 1;
+          const natRatio = el.naturalWidth / el.naturalHeight;
+          const targetRatio = isRot ? (1 / natRatio) : natRatio;
+          im.h = Math.max(30, Math.round(im.w / targetRatio));
+        }
+      });
+      commit(); renderAll();
+    } else if (toggleZ && imgs.length) {
+      const toFront = !imgs.some(i => i.z_order === 'front');
+      imgs.forEach(im => { im.z_order = toFront ? 'front' : 'back'; });
+      commit(); renderAll();
+    } else if (duplicate) {
+      duplicateSelection();
+    } else if (flag) {
+      const f = flag.dataset.flag;
+      if (l) l[f] = !l[f];
+      else { const ts = texts, on = !ts.every(i => i[f]); ts.forEach(i => { i[f] = on; }); }
+      commit(); renderAll();
+    } else if (rm) {
+      removeSelection();
+    }
   });
   floatEl.addEventListener('input', e => {
     if (!e.target.classList.contains('word')) return;
@@ -604,6 +789,38 @@ export function mountCanvas(host, nb, ctx) {
   });
   floatEl.addEventListener('change', e => { if (e.target.classList.contains('word')) { commit(); renderAll(); } });
   floatEl.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === 'Escape') { e.target.blur?.(); cv.focus(); } e.stopPropagation(); });
+
+  function duplicateSelection() {
+    const its = selItems();
+    if (!its.length) return;
+    const newIds = new Set();
+    const idMap = new Map();
+    for (const it of its) {
+      const clone = JSON.parse(JSON.stringify(it));
+      clone.id = uid();
+      clone.x += 24;
+      clone.y += 24;
+      st.items.push(clone);
+      newIds.add(clone.id);
+      idMap.set(it.id, clone.id);
+    }
+    if (its.length > 1) {
+      const origIds = new Set(its.map(i => i.id));
+      for (const l of st.links) {
+        if (origIds.has(l.from) && origIds.has(l.to)) {
+          const cl = JSON.parse(JSON.stringify(l));
+          cl.id = uid();
+          cl.from = idMap.get(l.from);
+          cl.to = idMap.get(l.to);
+          st.links.push(cl);
+        }
+      }
+    }
+    st.sel = newIds;
+    st.selLink = null;
+    commit();
+    renderAll();
+  }
 
   function removeSelection() {
     if (st.selLink) { st.links = st.links.filter(l => l.id !== st.selLink); st.selLink = null; }
@@ -629,6 +846,7 @@ export function mountCanvas(host, nb, ctx) {
     const mod = e.metaKey || e.ctrlKey;
     if (mod && e.key.toLowerCase() === 'z') { e.preventDefault(); e.shiftKey ? redo() : undo(); }
     else if (mod && e.key.toLowerCase() === 'y') { e.preventDefault(); redo(); }
+    else if (mod && e.key.toLowerCase() === 'd' && st.sel.size) { e.preventDefault(); duplicateSelection(); }
     else if (mod && e.key.toLowerCase() === 'a') { e.preventDefault(); st.sel = new Set(st.items.filter(i => i.type !== 'image').map(i => i.id)); st.selLink = null; renderAll(); }
     else if (mod && e.key.toLowerCase() === 'u') { e.preventDefault(); const ts = selItems().filter(i => i.type === 'text'); const on = !ts.every(i => i.underline); ts.forEach(i => { i.underline = on; }); commit(); renderAll(); }
     else if (e.key === ' ') { e.preventDefault(); st.spaceDown = true; }

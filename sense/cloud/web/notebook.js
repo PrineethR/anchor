@@ -3,6 +3,13 @@
 import { fmt, num, strip } from './pyish.js';
 
 export const COLORS = ['sky', 'blush', 'mint', 'violet', 'tangerine', 'berry'];
+export const ITEM_COLORS = new Set(['sky', 'blush', 'mint', 'violet', 'tangerine', 'berry', 'sun']);
+const TEXT_SIZES = new Set(['body', 'heading', 'title']);
+const SHAPE_KINDS = new Set(['blob', 'box', 'circle']);
+const SHAPE_FILLS = new Set(['hatch', 'tint', 'outline']);
+const SHAPE_STROKES = new Set(['dashed', 'solid', 'dotted']);
+const LINK_HEADS = new Set(['forward', 'both', 'none']);
+const LINK_STROKES = new Set(['solid', 'dashed', 'dotted']);
 const KINDS = new Set(['flow', 'hook', 'connector']);
 const MAX_ITEMS = 3000, MAX_TEXT = 5000, BOUND = 1_000_000;
 const TEXT_W = 320, IMPORT_W = 640, TYPED_SCALE = 1.5, GAP = 100, PAD = 40;
@@ -24,11 +31,22 @@ export function cleanItems(raw) {
     if (i.type === 'text') {
       item.text = Array.from(String(i.text ?? '')).slice(0, MAX_TEXT).join('');
       Object.assign(item, { underline: !!i.underline, caps: !!i.caps, fixed: !!i.fixed });
+      if (TEXT_SIZES.has(i.size)) item.size = i.size;
+      if (ITEM_COLORS.has(i.color)) item.color = i.color;
+      if (['left', 'center'].includes(i.align)) item.align = i.align;
+    }
+    if (i.type === 'shape') {
+      if (SHAPE_KINDS.has(i.shape)) item.shape = i.shape;
+      if (SHAPE_FILLS.has(i.fill)) item.fill = i.fill;
+      if (SHAPE_STROKES.has(i.stroke)) item.stroke = i.stroke;
+      if (ITEM_COLORS.has(i.color)) item.color = i.color;
     }
     if (i.type === 'image') {
       const src = String(i.src ?? '');
       if (!ASSET.test(src)) throw new Error("A photo on the canvas points at a file that isn't allowed.");
       item.src = src;
+      if ([0, 1, 2, 3, '0', '1', '2', '3'].includes(i.rot)) item.rot = ((parseInt(i.rot, 10) % 4) + 4) % 4;
+      if (['back', 'front'].includes(i.z_order)) item.z_order = i.z_order;
     }
     out.push(item);
   }
@@ -53,6 +71,9 @@ export function cleanLinks(raw, ids) {
     const a = endOf(l.from, ids), b = endOf(l.to, ids);
     if (a === null || b === null || sameEnd(a, b)) continue;
     const link = { id: lid, kind: l.kind, from: a, to: b, bend: n(l.bend, -2, 2) };
+    if (LINK_HEADS.has(l.heads)) link.heads = l.heads;
+    if (LINK_STROKES.has(l.stroke)) link.stroke = l.stroke;
+    if (ITEM_COLORS.has(l.color)) link.color = l.color;
     const label = Array.from(strip(String(l.label || ''))).slice(0, 200).join('');
     if (label) Object.assign(link, { label, caps: !!l.caps, underline: !!l.underline });
     out.push(link);
