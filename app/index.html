@@ -874,6 +874,45 @@ function renderInspector() {
   $$('[data-rm]', box).forEach(b => b.onclick = () => { S.draft.links.splice(+b.dataset.rm, 1); touch(); renderOverlay(); renderInspector(); });
 }
 
+function trackerBlock() {
+  if (!window.MS_BACKEND) return '';
+  const R = window.MS_BACKEND.reader, u = R.usage(), cur = R.settings();
+  const m = u.month || { pages: u.pages || 0, usd: u.usd || 0, tokens: 0 };
+  const all = u.allTime || { pages: m.pages, usd: m.usd, tokens: m.tokens };
+  const fmtK = n => n >= 1_000_000 ? (n / 1_000_000).toFixed(1) + 'M' : n >= 1_000 ? Math.round(n / 1_000) + 'k' : String(n);
+  const avg = m.pages ? R.rupees(m.usd / m.pages) : (cur.preset === 'cheaper' ? 'about ₹0.6' : 'about ₹1.0');
+  const tile = (color, labelText, value, caption) => `<div class="nw-tile" style="--nw-c:var(--${color});--nw-oc:var(--ink-900)"><div class="nw-tile__label">${labelText}</div><div class="nw-tile__value">${value}</div><div class="nw-tile__caption">${caption}</div></div>`;
+
+  return `<section class="prof-tracker"><h2 class="section-h">Reading <em>tracker</em></h2>
+    <p class="hint" style="margin-top:0">Pages read with Gemini, tokens processed, and estimated API usage.</p>
+    <div class="nw-tile nw-tile--group tiles">
+      ${tile('mint', 'This month', m.pages ? R.rupees(m.usd) : '₹0', `${plural(m.pages, 'page')} read`)}
+      ${tile('sky', 'Tokens', fmtK(m.tokens || 0), 'in & out this month')}
+      ${tile('sun', 'All-time', all.pages ? R.rupees(all.usd) : '₹0', `${plural(all.pages, 'page')} total`)}
+      ${tile('tangerine', 'Avg / page', avg, 'at list price')}
+    </div>
+    ${u.recent && u.recent.length ? `
+      <div style="margin-top:var(--s-3)">
+        <h3 class="nw-label" style="display:block;margin-bottom:var(--s-2)">Recent readings</h3>
+        <ul class="rows" style="margin:0">${u.recent.map(r => {
+          const tok = r.tokens ? (r.tokens.in || 0) + (r.tokens.out || 0) + (r.tokens.thinking || 0) : 0;
+          return `<li class="nw-card nw-card--raised" style="padding:var(--s-2) var(--s-3);margin-bottom:var(--s-2);display:flex;align-items:center;justify-content:space-between">
+            <div>
+              <span style="font-weight:600;display:block">${esc(r.title)}</span>
+              <span class="nw-label">${esc(fmtDate(r.date))} · ${esc(r.model)}</span>
+            </div>
+            <div style="text-align:right">
+              <span style="font-weight:600;color:var(--ink-900);display:block">${R.rupees(r.usd) || '₹0'}</span>
+              ${tok ? `<span class="nw-label">${fmtK(tok)} tok</span>` : ''}
+            </div>
+          </li>`;
+        }).join('')}</ul>
+      </div>
+    ` : ''}
+    <p class="hint" style="margin-top:var(--s-2)">Google AI Studio free tier keys cost ₹0 (up to 1,500 requests/day). Prices shown reflect standard list prices if billing is attached.</p>
+  </section>`;
+}
+
 function readerBlock() {
   const R = window.MS_BACKEND.reader, cur = R.settings(), u = R.usage();
   const presets = Object.entries(R.presets).map(([id, p]) => `<label class="nw-tog" style="--nw-on:var(--action)"><input type="radio" name="preset" value="${id}" ${cur.preset === id ? 'checked' : ''}><span class="nw-cb">${ico('check', { size: 16, sw: 3 })}</span><span><b>${esc(p.label)}</b>: ${esc(p.cost)}</span></label>`).join('');
@@ -885,10 +924,11 @@ function readerBlock() {
       <div class="nw-field__box"><input type="password" id="gkey" autocomplete="off" spellcheck="false" placeholder="${cur.key ? '•••••••• saved on this device' : 'Paste it here'}"></div></div>
     <p class="hint">Kept on this device only, never in your notes. Get one at aistudio.google.com/apikey. Each device needs its own.</p>
     <div class="check-row" style="display:grid;gap:var(--s-2)">${presets}</div>
+    <p class="hint" style="margin:var(--s-2) 0 0">Free tier keys at aistudio.google.com/apikey cost ₹0 (up to 1,500 requests/day). The ₹1 to ₹2 per page estimate applies only if billing is enabled on your key.</p>
     <div class="reader-actions" style="display:flex;gap:var(--s-2);flex-wrap:wrap;margin-top:var(--s-3)">
       <button class="nw-btn nw-btn--primary" id="gSave" type="button"><span>${cur.key ? 'Save changes' : 'Save key'}</span></button>
       ${cur.key ? '<button class="nw-btn nw-btn--ghost" id="gForget" type="button"><span>Remove key</span></button>' : ''}</div>
-    <p class="hint">Each page you add is sent to Google to be read. On a free key Google may use it to improve its products; a paid key is not used that way.${u.pages ? ` This month: ${plural(u.pages, 'page')} read, ${R.rupees(u.usd)}.` : ''}</p></section>`;
+    <p class="hint">Each page you add is sent to Google to be read. On a free key Google may use it to improve its products; a paid key is not used that way.</p></section>`;
 }
 function wireReader() {
   const box = $('.prof-reader'); if (!box) return;
@@ -1027,6 +1067,7 @@ async function profilePage() {
         </section>
       </div>
     </div>
+    ${window.MS_BACKEND ? trackerBlock() : ''}
     ${window.MS_BACKEND ? readerBlock() : ''}
     ${window.MS_BACKEND ? `<section class="prof-account"><h2 class="section-h">Your <em>account</em></h2>
       <p class="hint" style="margin-top:0">Signed in as ${esc(window.MS_BACKEND.account.email)}.</p>

@@ -493,10 +493,40 @@ export function createBackend({ db, user, onSignOut }) {
   const resumer = setInterval(() => resumeStale(), 60_000);
   setTimeout(() => resumeStale(), 3000);
 
-  /** What reading has cost this month, from what each page recorded. */
-  const usageThisMonth = () => {
-    const mine = live(S.pages).filter(d => d.readUsd != null && monthOf(d.created) === monthOf(nowIso()));
-    return { pages: mine.length, usd: mine.reduce((t, d) => t + d.readUsd, 0) };
+  /** What reading has cost this month and all-time, from what each page recorded. */
+  const usageStats = () => {
+    const gemPages = live(S.pages).filter(d => d.source === 'gemini' || d.readUsd != null);
+    const thisMonth = gemPages.filter(d => monthOf(d.created) === monthOf(nowIso()));
+    const sumUsd = list => list.reduce((t, d) => t + (d.readUsd || 0), 0);
+    const sumTokens = list => list.reduce((t, d) => {
+      const tok = d.readTokens || {};
+      return t + (tok.in || 0) + (tok.out || 0) + (tok.thinking || 0);
+    }, 0);
+
+    const mUsd = sumUsd(thisMonth);
+    const aUsd = sumUsd(gemPages);
+    return {
+      pages: thisMonth.length,
+      usd: mUsd,
+      month: {
+        pages: thisMonth.length,
+        usd: mUsd,
+        tokens: sumTokens(thisMonth),
+      },
+      allTime: {
+        pages: gemPages.length,
+        usd: aUsd,
+        tokens: sumTokens(gemPages),
+      },
+      recent: gemPages.slice().sort((a, b) => ((b.created || '') > (a.created || '') ? 1 : -1)).slice(0, 5).map(d => ({
+        id: d.id,
+        title: d.title || 'Untitled page',
+        date: d.created,
+        model: d.readModel || 'Gemini',
+        usd: d.readUsd || 0,
+        tokens: d.readTokens || null,
+      }))
+    };
   };
 
   /** Rotate (turn a Gemini-read page a quarter turn, no network) or Read again (ask Gemini once more). */
@@ -537,7 +567,7 @@ export function createBackend({ db, user, onSignOut }) {
         await whenReady('mac'); await whenReady('pages');
         const { preset } = R.settings();
         return { gemini: R.hasKey(), vision: false, labeled: 0, notebooks: true,
-          reader: { here: R.hasKey(), preset: R.PRESETS[preset].label, month: usageThisMonth() },
+          reader: { here: R.hasKey(), preset: R.PRESETS[preset].label, month: usageStats() },
           cloud: { email: user.email, mac: macState(), waiting: live(S.pages).filter(d => d.status === 'queued').length } };
       }
       if (r[0] === 'profile') {
@@ -598,7 +628,7 @@ export function createBackend({ db, user, onSignOut }) {
     subscribe(kinds, cb) { const s = { kinds, cb }; subs.add(s); return () => subs.delete(s); },
     account: { email: user.email, signOut: async () => { unsubs.forEach(u => u()); clearInterval(tick); clearInterval(resumer); watcher.disconnect(); await onSignOut(); } },
     macState, net: netState,
-    reader: { settings: R.settings, save: R.saveSettings, forget: R.forgetKey, check: R.checkKey, presets: R.PRESETS, usage: usageThisMonth, rupees: R.rupees, resume: resumeStale },
+    reader: { settings: R.settings, save: R.saveSettings, forget: R.forgetKey, check: R.checkKey, presets: R.PRESETS, usage: usageStats, rupees: R.rupees, resume: resumeStale },
     // for tests and the console
     _state: S, _db: db, _paths: P, _nbBody: nbBody,
   };
