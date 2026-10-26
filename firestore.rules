@@ -1,18 +1,57 @@
-rules_version='2'
+rules_version = '2';
 
+// Anchor's notes are private. Nothing here is readable or writable without signing in, and signing in is
+// not enough: the Google account's email must also be listed as a document in `allowed/` (add it by hand
+// in the Firebase console; no app can). Everything a person owns lives under users/{their uid}/.
+//
+// The Mac that reads photos is not a user: it uses a service account, which bypasses these rules.
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    function verified() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+    function onTheList() {
+      return exists(/databases/$(database)/documents/allowed/$(request.auth.token.email.lower()));
+    }
+    function owns(uid) {
+      return verified() && request.auth.uid == uid && onTheList();
+    }
+
+    // You may ask whether your own email is on the list (so the app can say so). Nobody can change the list from a client.
+    match /allowed/{email} {
+      allow get: if verified() && request.auth.token.email.lower() == email;
+      allow list, write: if false;
+    }
+
+    // The top document only records who you are.
+    match /users/{uid} {
+      allow get: if owns(uid);
+      allow create, update: if owns(uid)
+        && request.resource.data.keys().hasOnly(['email', 'createdAt', 'lastSeen'])
+        && request.resource.data.email == request.auth.token.email;
+      allow list, delete: if false;
+    }
+
+    // Photographed pages (and, below each, its photo), notebooks (and their photos), what the Mac has learned
+    // about your writing, changes you asked for that the Mac has not applied yet, and whether the Mac is online.
+    match /users/{uid}/pages/{document=**}        { allow read, write: if owns(uid); }
+    // A notebook's small part may only move forward one revision at a time. That is what stops a device that was offline
+    // from overwriting what you wrote elsewhere meanwhile: its stale save is refused, and the site keeps those edits as a copy.
+    match /users/{uid}/notebooks/{nid} {
+      allow read, delete: if owns(uid);
+      allow create: if owns(uid) && request.resource.data.rev == 1;
+      allow update: if owns(uid) && request.resource.data.rev == resource.data.rev + 1;
+    }
+    match /users/{uid}/notebooks/{nid}/parts/{part}  { allow read, write: if owns(uid); }
+    match /users/{uid}/notebooks/{nid}/files/{file}  { allow read, write: if owns(uid); }
+    match /users/{uid}/profile/{document=**}      { allow read: if owns(uid); allow write: if false; }
+    match /users/{uid}/profileEdits/{document=**} { allow read, write: if owns(uid); }
+    match /users/{uid}/state/{document=**}        { allow read: if owns(uid); allow write: if false; }
+
+    // Everything else is closed.
     match /{document=**} {
-      // This rule allows anyone with your database reference to view, edit,
-      // and delete all data in your database. It is useful for getting
-      // started, but it is configured to expire after 30 days because it
-      // leaves your app open to attackers. At that time, all client
-      // requests to your database will be denied.
-      //
-      // Make sure to write security rules for your app before that time, or
-      // else all client requests to your database will be denied until you
-      // update your rules.
-      allow read, write: if request.time < timestamp.date(2026, 11, 25);
+      allow read, write: if false;
     }
   }
 }

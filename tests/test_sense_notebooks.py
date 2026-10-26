@@ -277,7 +277,7 @@ class WebFilesTests(AppTest):
         _, html, _ = self.call("GET", "/", raw=True)
         html = html.decode()
         self.assertIn("HAS_NB", html)
-        self.assertIn("'/web/canvas.js'", html)
+        self.assertIn("'./web/canvas.js'", html)
         self.assertIn('"move-up-right"', html)          # the canvas tools' glyphs came with the page
         self.assertIn("NAV_BASE", html)                  # Your pages and How you write are still the base of the nav
         self.assertIn("if (h.startsWith('#/note/')) return notePage", html)  # the photo routes are as they were

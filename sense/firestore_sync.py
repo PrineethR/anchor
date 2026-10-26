@@ -3,6 +3,10 @@
 Allows notes, semantic threads, notebooks, and handwriting profiles to be accessed
 from anywhere while keeping local processing instant and decoupled from network latency.
 Uses standard library urllib and JSON so there are no extra external dependencies.
+
+SUPERSEDED by sense/cloud (the website and the Mac worker). This one writes to top-level collections with no sign-in, which only
+works while the database is open to everyone; the project's rules now allow only the signed-in owner under users/{uid}/, so these
+writes are refused. It is off by default (`--sync` to turn it on) and has no API key built in (set FIRESTORE_API_KEY).
 """
 
 from __future__ import annotations
@@ -23,7 +27,6 @@ from typing import Any
 LOGGER = logging.getLogger("anchor.sync")
 
 DEFAULT_PROJECT = "anchor-notes-prineeth"
-DEFAULT_API_KEY = "AIzaSyCmdOd2DjBgZULIpF62ypDSUFRMDo1vm9Y"
 DEFAULT_DATABASE = "(default)"
 
 
@@ -75,7 +78,7 @@ class FirestoreClient:
     def __init__(self, project_id: str | None = None, api_key: str | None = None,
                  database: str = DEFAULT_DATABASE, timeout: float = 15.0):
         self.project_id = project_id or os.getenv("FIRESTORE_PROJECT_ID", DEFAULT_PROJECT)
-        self.api_key = api_key or os.getenv("FIRESTORE_API_KEY", DEFAULT_API_KEY)
+        self.api_key = api_key or os.getenv("FIRESTORE_API_KEY", "")
         self.database = database
         self.timeout = timeout
         self.base_url = (

@@ -1,0 +1,9 @@
+{
+  "name": "anchor-cloud-site",
+  "private": true,
+  "description": "Build-time tools for the Make sense website. Nothing here ships: build.py bundles the Firebase SDK into public/.",
+  "devDependencies": {
+    "esbuild": "0.28.2",
+    "firebase": "13.1.0"
+  }
+}

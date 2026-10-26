@@ -150,10 +150,13 @@ class Store:
             self.profile.learn_note(nid, raw, page, page, False)
             self.profile.save()
 
-    def create(self, data: bytes) -> dict:
+    def create(self, data: bytes, nid: str | None = None) -> dict:
+        """Read a photo into a new page. `nid` is for a page that already has an id elsewhere (one added from the website)."""
         if not data:
             raise ValueError("That upload was empty. Choose the photo again.")
-        nid = f"{datetime.now():%Y%m%d-%H%M%S}-{secrets.token_hex(2)}"
+        nid = nid or f"{datetime.now():%Y%m%d-%H%M%S}-{secrets.token_hex(2)}"
+        if not ID.match(nid):
+            raise ValueError("That isn't a page id.")
         d = self.home / nid
         d.mkdir()
         try:
@@ -313,10 +316,15 @@ class Store:
         return st
 
 
-def render_ui() -> str:
+def render_ui(cloud: bool = False) -> str:
+    """The one page. `cloud` builds the website's copy (sense/cloud), which signs in before it draws anything."""
     icons = {**json.loads((theme.STATIC / "icons.json").read_text()), **json.loads((theme.STATIC / "icons-extra.json").read_text())}
+    boot = '<script type="module" src="cloud/boot.js"></script>' if cloud else ""
+    head = ('<link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icons/apple-touch-icon.png">'
+            '<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Make sense">'
+            '<meta name="theme-color" content="#FBF7F0">') if cloud else ""
     return (UI.read_text().replace("/*__CANVAS_CSS__*/", canvas.CSS).replace("/*__SHARE_CSS__*/", share.CSS)
-            .replace("/*__ICONS__*/{}", json.dumps(icons)))
+            .replace("/*__ICONS__*/{}", json.dumps(icons)).replace("<!--__CLOUD__-->", boot).replace("<!--__CLOUD_HEAD__-->", head))
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -527,8 +535,11 @@ def main(argv=None) -> int:
     ap.add_argument("--port", type=int, default=8765)
     ap.add_argument("--no-labeled", action="store_true", help="don't learn vocabulary from data/labeled")
     ap.add_argument("--no-notebooks", action="store_true", help="run without the notebooks canvas: only the photo pages")
-    ap.add_argument("--sync", dest="sync", action="store_true", default=True, help="sync notes and notebooks to Cloud Firestore in background")
-    ap.add_argument("--no-sync", dest="sync", action="store_false", help="disable background sync to Cloud Firestore")
+    ap.add_argument("--sync", dest="sync", action="store_true", default=False, help="(superseded by --cloud) mirror to open Firestore collections")
+    ap.add_argument("--no-sync", dest="sync", action="store_false", help="the default")
+    ap.add_argument("--cloud", metavar="EMAIL", help="also keep this Mac in step with the website (see sense/cloud): reads the photos you add "
+                                                     "there. EMAIL is the Google account you sign in to it with")
+    ap.add_argument("--key-file", help="with --cloud: your Firebase service-account key (or set ANCHOR_SERVICE_ACCOUNT)")
     a = ap.parse_args(argv)
     labeled = ROOT / "data" / "no-labeled" if a.no_labeled else None
     server = make_server(Path(a.home), a.host, a.port, labeled, with_notebooks=not a.no_notebooks, with_sync=a.sync)
@@ -536,6 +547,18 @@ def main(argv=None) -> int:
     reader = "Gemini" if st["gemini"] else "Apple Vision (text only, no arrows)" if st["vision"] else "NONE: set GEMINI_API_KEY"
     sync_desc = f"  ·  sync to Firestore ({firestore_sync.DEFAULT_PROJECT}) ON" if a.sync else ""
     print(f"Make sense on http://{a.host}:{a.port}  ·  notes in {a.home}  ·  reading with {reader}{sync_desc}", flush=True)
+    if a.cloud:
+        from .cloud import worker  # only when asked: the photo app on its own knows nothing of the website
+        try:
+            lock = worker.take_lock(Path(a.home))
+            fs, uid = worker.connect(a.cloud, a.key_file, None)
+        except (worker.WorkerError, RuntimeError) as e:
+            print(e, file=sys.stderr)
+            return 1
+        handler = server.RequestHandlerClass
+        sync = worker.Worker(handler.store, handler.nbs or notebooks.Notebooks(handler.store), fs, uid)
+        threading.Thread(target=sync.run, daemon=True, name="CloudWorker").start()
+        print(f"Keeping in step with the website for {a.cloud}.", flush=True)
     try:
         server.serve_forever()
     except KeyboardInterrupt:

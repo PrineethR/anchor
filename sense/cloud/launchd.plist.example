@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Starts the cloud worker when you log in to the Mac and restarts it if it stops. Copy to ~/Library/LaunchAgents/com.anchor.makesense.plist,
+     change the three YOU/paths, then:  launchctl load ~/Library/LaunchAgents/com.anchor.makesense.plist
+     To stop it:                        launchctl unload ~/Library/LaunchAgents/com.anchor.makesense.plist
+     If the project lives in Desktop or Documents, macOS may refuse the worker access to it when launched this way:
+     grant the Python you use "Full Disk Access" (System Settings > Privacy & Security), or keep the project elsewhere. -->
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>com.anchor.makesense</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/usr/bin/caffeinate</string><string>-i</string>
+    <string>/Users/YOU/path/to/Anchor/.venv/bin/python</string>
+    <string>-m</string><string>sense.cloud.worker</string>
+    <string>--email</string><string>YOU@gmail.com</string>
+    <string>--key-file</string><string>/Users/YOU/.config/anchor/service-account.json</string>
+  </array>
+  <key>WorkingDirectory</key><string>/Users/YOU/path/to/Anchor</string>
+  <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key><true/>
+  <key>StandardOutPath</key><string>/Users/YOU/Library/Logs/makesense-worker.log</string>
+  <key>StandardErrorPath</key><string>/Users/YOU/Library/Logs/makesense-worker.log</string>
+</dict>
+</plist>

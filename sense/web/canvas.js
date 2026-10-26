@@ -146,7 +146,9 @@ export function mountCanvas(host, nb, ctx) {
       el = t.content.firstElementChild;
     } else if (it.type === 'image') {
       el = document.createElement('img'); el.alt = 'A photo of a page'; el.draggable = false;
-      el.src = `/api/notebooks/${st.id}/assets/${it.src}`; el.className = 'it image';
+      el.className = 'it image';
+      if (ctx.assetUrl) ctx.assetUrl(st.id, it.src).then(u => { el.src = u; }).catch(() => {});   // the website keeps photos in Firestore
+      else el.src = `/api/notebooks/${st.id}/assets/${it.src}`;
     } else { el = document.createElement('div'); el.className = 'it text'; }
     el.dataset.id = it.id;
     return el;
@@ -660,7 +662,7 @@ export function mountCanvas(host, nb, ctx) {
   async function addPhoto() {
     const notes = await ctx.api('/notes').catch(() => []);
     const pages = notes.slice(0, 8);
-    const r = await sheet({ title: 'Add a <em>photo</em>', body: `<p class="lead" style="font-size:var(--t-body)">The photo lands on the page with its words beside it, ready to move and fix.${pages.length ? ' Or bring in a page you have already read.' : ''}</p>`,
+    const r = await sheet({ title: 'Add a <em>photo</em>', body: `<p class="lead" style="font-size:var(--t-body)">${ctx.cloud ? 'A new photo lands on the page by itself. To bring its words in too, add it under Pages first, then bring it in from here.' : 'The photo lands on the page with its words beside it, ready to move and fix.'}${pages.length ? ' Or bring in a page you have already read.' : ''}</p>`,
       buttons: [{ id: 'new', label: 'Choose a photo', variant: 'primary', icon: 'image' }, ...pages.map(p => ({ id: 'page:' + p.id, label: `${p.title}  ·  ${ctx.fmtDate(p.created)}`, variant: 'soft' }))] });
     if (!r.id) return;
     await flush();
@@ -669,9 +671,9 @@ export function mountCanvas(host, nb, ctx) {
       const input = document.createElement('input'); input.type = 'file'; input.accept = 'image/*';
       input.onchange = async () => {
         const f = input.files[0]; if (!f) return;
-        const out = await guarded('Reading your handwriting…', 'Finding the page first, then the words.', () =>
+        const out = await guarded(ctx.cloud ? 'Putting the photo on the page…' : 'Reading your handwriting…', ctx.cloud ? '' : 'Finding the page first, then the words.', () =>
           ctx.api(`/notebooks/${st.id}/photo?x=${Math.round(at.x)}&y=${Math.round(at.y)}`, { method: 'POST', headers: { 'Content-Type': f.type || 'application/octet-stream' }, body: f }));
-        if (out) { adopt(out, out.added); toast('Added. Its words are beside it.', { mood: 'joyful' }); }
+        if (out) { adopt(out, out.added); toast(ctx.cloud ? 'Added.' : 'Added. Its words are beside it.', { mood: 'joyful' }); }
       };
       input.click();
     } else {
@@ -684,9 +686,10 @@ export function mountCanvas(host, nb, ctx) {
       buttons: [{ id: 'html', label: 'Download the page', variant: 'primary', icon: 'share' }, { id: 'copy', label: 'Copy as Markdown', variant: 'secondary' }, { id: 'md', label: 'Download Markdown', variant: 'soft' }] });
     if (!r.id) return;
     await flush();
-    if (r.id === 'html') location.href = `/api/notebooks/${st.id}/share.html`;
-    else if (r.id === 'md') location.href = `/api/notebooks/${st.id}/share.md`;
-    else { try { await navigator.clipboard.writeText(await ctx.api(`/notebooks/${st.id}/share.md`)); toast('Copied. Paste it into a message.', { mood: 'joyful' }); } catch { location.href = `/api/notebooks/${st.id}/share.md`; toast("The clipboard wasn't available, so the file is downloading instead.", { icon: 'info' }); } }
+    const download = p => (ctx.download ? ctx.download(p) : void (location.href = '/api' + p));
+    if (r.id === 'html') download(`/notebooks/${st.id}/share.html`);
+    else if (r.id === 'md') download(`/notebooks/${st.id}/share.md`);
+    else { try { await navigator.clipboard.writeText(await ctx.api(`/notebooks/${st.id}/share.md`)); toast('Copied. Paste it into a message.', { mood: 'joyful' }); } catch { download(`/notebooks/${st.id}/share.md`); toast("The clipboard wasn't available, so the file is downloading instead.", { icon: 'info' }); } }
   }
   async function openMenu() {
     const colors = ['sky', 'blush', 'mint', 'violet', 'tangerine', 'berry'];

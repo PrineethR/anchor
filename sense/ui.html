@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
 <title>Make sense</title>
-<link rel="stylesheet" href="/static/noteworthy.css">
+<!--__CLOUD_HEAD__-->
+<link rel="stylesheet" href="static/noteworthy.css">
 <style>
 /*__SHARE_CSS__*/
 /*__CANVAS_CSS__*/
@@ -36,6 +37,8 @@ body.on-note .phone-add { display: none; }
   font: var(--w-medium) var(--t-ui)/1 var(--font-ui); transition: background-color var(--dur) var(--ease-out), color var(--dur) var(--ease-out); }
 .pill:hover { background: var(--bg-sunken); color: var(--fg-1); }
 .pill[aria-current="page"] { background: var(--action); color: var(--on-action); }
+.macdot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--line-strong); margin-right: .5em; }
+.macdot.on { background: var(--mint); box-shadow: 0 0 0 3px var(--mint-soft); }
 .rail-foot { margin-top: auto; padding: 0 var(--s-3); color: var(--fg-3); font: var(--w-regular) var(--t-sm)/1.4 var(--font-ui); }
 
 /* ---- Text roles --------------------------------------------------------------------------------------- */
@@ -70,7 +73,7 @@ body.on-note .phone-add { display: none; }
 .title:hover { border-bottom-color: var(--line); }
 .title:focus { outline: 0; border-bottom-color: var(--line-strong); }
 .note-head .nw-label { margin-top: var(--s-2); }
-.note-actions { display: flex; gap: var(--s-2); align-items: center; }
+.note-actions { display: flex; gap: var(--s-2); align-items: center; flex-wrap: wrap; }
 .note-grid { display: grid; gap: var(--s-7); align-items: start; }
 @media (min-width: 1100px) { .note-grid { grid-template-columns: minmax(0, 1.2fr) minmax(20rem, 1fr); } .page-col { position: sticky; top: var(--s-5); } }
 .modebar { display: flex; gap: var(--s-3); align-items: center; flex-wrap: wrap; margin-bottom: var(--s-3); }
@@ -153,12 +156,13 @@ details.fixes s { color: var(--fg-3); }
 
 /* ---- Profile ------------------------------------------------------------------------------------------ */
 .prof { display: grid; gap: var(--s-7); margin-top: var(--s-6); }
+.prof > div { min-width: 0; }
 @media (min-width: 1100px) { .prof { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; } }
 .prof section { margin-bottom: var(--section-gap); }
-.tiles { --nw-c: var(--fg-1); --nw-oc: var(--fg-inverse); grid-template-columns: 1fr 1fr; }
+.tiles { --nw-c: var(--fg-1); --nw-oc: var(--fg-inverse); grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .tiles .nw-tile { --nw-oc: var(--ink-900); border-radius: var(--radius-xl); min-height: 9.5rem; }
 .pairs { list-style: none; margin: 0 0 var(--s-3); padding: 0; border-top: 1px solid var(--line-soft); }
-.pairs li { display: flex; gap: var(--s-3); align-items: center; padding: var(--s-2) 0; border-bottom: 1px solid var(--line-soft); font: var(--w-regular) var(--t-body)/1.3 var(--font-body); }
+.pairs li { display: flex; flex-wrap: wrap; gap: var(--s-3); align-items: center; padding: var(--s-2) 0; border-bottom: 1px solid var(--line-soft); font: var(--w-regular) var(--t-body)/1.3 var(--font-body); }
 .pairs .nw-field { flex: 1; min-width: 0; }
 .pairs .nw-field__box { min-height: 44px; }
 .pairs .means { color: var(--fg-3); font: var(--w-regular) var(--t-sm)/1 var(--font-ui); flex: none; }
@@ -175,7 +179,7 @@ details.fixes s { color: var(--fg-3); }
     <nav class="rail-nav" aria-label="Pages"></nav>
     <button class="nw-btn nw-btn--primary nw-btn--block" id="railAdd" type="button"></button>
     <button class="nw-btn nw-btn--soft nw-btn--block" id="railNew" type="button" hidden><span>New notebook</span></button>
-    <p class="rail-foot">Everything stays on this Mac.</p>
+    <p class="rail-foot" id="railFoot">Everything stays on this Mac.</p>
   </aside>
   <div>
     <div class="topbar"><a class="wordmark-link" href="#/">Make <em>sense</em></a></div>
@@ -187,8 +191,9 @@ details.fixes s { color: var(--fg-3); }
 <input type="file" id="picker" accept="image/*" hidden>
 <div id="layer"></div>
 
+<!--__CLOUD__-->
 <script type="module">
-import * as ds from '/static/ds.js';
+import * as ds from './static/ds.js';
 
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
@@ -206,6 +211,7 @@ function ico(name, { size = 20, sw = 1.75, cls = '' } = {}) {
 }
 
 async function api(path, opts = {}) {
+  if (window.MS_BACKEND) return window.MS_BACKEND.api(path, opts);   // the website: Firestore, not a server
   const r = await fetch('/api' + path, { ...opts, headers: { 'X-Makesense': '1', ...(opts.headers || {}) } });
   const isJson = (r.headers.get('content-type') || '').includes('json');
   const body = isJson ? await r.json() : await r.text();
@@ -213,6 +219,16 @@ async function api(path, opts = {}) {
   return body;
 }
 const send = (method, path, body) => api(path, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body ?? {}) });
+
+/** An <img> source for a page's photo: the server's file here, the small copy then the full one on the website. */
+const photoAttr = (id, v = '', full = true) => window.MS_BACKEND ? window.MS_BACKEND.photoAttr(id, v, full) : `src="/api/notes/${id}/photo${v ? '?v=' + v : ''}"`;
+const download = path => window.MS_BACKEND ? window.MS_BACKEND.download(path).catch(oops) : void (location.href = '/api' + path);
+const ago = iso => {
+  const m = Math.max(0, (Date.now() - new Date(iso)) / 60000);
+  return m < 2 ? 'just now' : m < 90 ? `${Math.round(m)} minutes ago` : m < 36 * 60 ? `${Math.round(m / 60)} hours ago` : `${Math.round(m / 1440)} days ago`;
+};
+const live = (kinds, cb) => { unsubLive?.(); unsubLive = window.MS_BACKEND ? window.MS_BACKEND.subscribe(kinds, cb) : null; };
+let unsubLive = null;
 
 const fmtDate = iso => new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
 const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
@@ -291,9 +307,16 @@ function paintShell(route) {
   $$('.phone-nav [data-href]').forEach(b => b.onclick = () => { location.hash = b.dataset.href; });
   $('#railAdd').innerHTML = `${ico('plus', { size: 20, cls: 'nw-btn__icon' })}<span>Add a page</span>`;
   $('#phoneAdd').innerHTML = ico('plus', { size: 26, sw: 1.6 });
+  paintFoot();
   document.body.classList.toggle('on-note', route === 'note');
   document.body.classList.toggle('on-canvas', route === 'canvas');
   addAction = route === 'notebooks' ? newNotebook : () => $('#picker').click();
+}
+function paintFoot() {
+  const foot = $('#railFoot');
+  if (!window.MS_BACKEND) return;
+  const m = window.MS_BACKEND.macState();
+  foot.innerHTML = `<span class="macdot${m.online ? ' on' : ''}"></span>${m.online ? 'Your Mac is on' : 'Your Mac is off'}<br>${esc(window.MS_BACKEND.account.email)}`;
 }
 function paintBackdrop(seed, { variant = 'shapes', animate = false, count = 4 } = {}) {
   $('#backdrop').innerHTML = ds.backdrop({ variant, seed, count, marks: 6, animate });
@@ -308,6 +331,7 @@ document.addEventListener('click', e => { const b = e.target.closest('.nw-btn--p
 let currentHash = location.hash || '#/';
 let activeCanvas = null;
 async function route() {
+  if (unsubLive) { unsubLive(); unsubLive = null; }
   if (activeCanvas) { const c = activeCanvas; activeCanvas = null; await c.destroy(); }
   document.body.classList.remove('on-canvas');
   const h = currentHash = location.hash || '#/';
@@ -331,12 +355,32 @@ window.addEventListener('hashchange', async () => {
 window.addEventListener('beforeunload', e => { if (S.dirty) { e.preventDefault(); e.returnValue = ''; } });
 
 /* ---------- home ---------- */
+function readerLine(st) {
+  if (st.cloud) {
+    const m = st.cloud.mac, w = st.cloud.waiting;
+    return m.online ? 'Your Mac is on. It reads each page you add, usually within a minute.'
+      : `Your Mac is off${m.seen ? `, last on ${ago(m.seen)}` : ''}. A page you add waits here and gets read when the Mac is back on. You can still open everything already read, and write in your notebooks.${w ? ` ${plural(w, 'page')} waiting.` : ''}`;
+  }
+  return st.gemini ? 'Reading with Gemini. It finds arrows and underlines as well as words.'
+    : st.vision ? 'Reading with Apple Vision on this Mac. It finds words but not arrows yet, so you draw those in.'
+    : 'No reader is set up. Add a GEMINI_API_KEY and restart, or run this on a Mac.';
+}
+const badge = (color, icon, text) => `<span class="nw-badge nw-badge--soft" style="--nw-s:var(--${color}-soft);--nw-i:var(--${color}-ink)">${icon ? ico(icon, { size: 14, sw: 2 }) : ''}${text}</span>`;
+function pageRows(notes) {
+  if (!notes.length) return `<div class="empty-state">${ds.illustration('empty-journal', { size: 170, still: true })}<p class="lead">Nothing here yet. Add your first page and it shows up here.</p></div>`;
+  return `<ul class="rows">${notes.map(n => {
+    const ready = !n.status || n.status === 'ready';
+    const meta = ready ? label(fmtDate(n.created), plural(n.threads, 'thread'), plural(n.loose, 'loose note'), n.actions ? plural(n.actions, 'to-do') : '') : fmtDate(n.created);
+    return `<li><a class="nw-card nw-card--raised nw-card--interactive page-row" href="#/note/${n.id}">
+      <img ${photoAttr(n.id, '', false)} alt="" loading="lazy">
+      <span><span class="t">${esc(ready ? n.title : n.status === 'failed' ? 'Couldn’t read this page' : 'A page waiting to be read')}</span><span class="nw-label">${esc(meta)}</span></span>
+      ${!ready ? (n.status === 'failed' ? badge('blush', 'triangle-alert', 'Couldn’t read') : badge('tangerine', 'info', 'Waiting for your Mac')) : n.confirmed ? badge('mint', 'check', 'Checked') : ''}
+    </a></li>`;
+  }).join('')}</ul>`;
+}
 async function homePage() {
   S.dirty = false; S.note = null; paintShell('notes'); paintBackdrop(3, { animate: true });
   const [st, notes] = await Promise.all([api('/status'), api('/notes')]);
-  const reader = st.gemini ? 'Reading with Gemini. It finds arrows and underlines as well as words.'
-    : st.vision ? 'Reading with Apple Vision on this Mac. It finds words but not arrows yet, so you draw those in.'
-    : 'No reader is set up. Add a GEMINI_API_KEY and restart, or run this on a Mac.';
   app.innerHTML = `
     <h1 class="page-h">Add a page<br><em>from your notebook</em></h1>
     <p class="lead">Drop in a photo, or take one. Lay the page flat, with the light coming from the side away from your writing hand.</p>
@@ -347,17 +391,11 @@ async function homePage() {
           <button class="nw-btn nw-btn--primary nw-btn--lg" id="pick" type="button">${ico('image', { size: 22, cls: 'nw-btn__icon' })}<span>Choose a photo</span>${ico('arrow-right', { size: 22, sw: 1.5, cls: 'nw-btn__arrow' })}</button>
           <p class="hint" style="margin:0">or drop one here</p>
         </div>
-        <p class="hint">${esc(reader)}</p>
+        <p class="hint" id="readerHint">${esc(readerLine(st))}</p>
       </div>
       <div>
         <h2 class="section-h">Your <em>pages</em></h2>
-        ${notes.length ? `<ul class="rows">${notes.map(n => `
-          <li><a class="nw-card nw-card--raised nw-card--interactive page-row" href="#/note/${n.id}">
-            <img src="/api/notes/${n.id}/photo" alt="" loading="lazy">
-            <span><span class="t">${esc(n.title)}</span><span class="nw-label">${esc(label(fmtDate(n.created), plural(n.threads, 'thread'), plural(n.loose, 'loose note'), n.actions ? plural(n.actions, 'to-do') : ''))}</span></span>
-            ${n.confirmed ? `<span class="nw-badge nw-badge--soft" style="--nw-s:var(--mint-soft);--nw-i:var(--mint-ink)">${ico('check', { size: 14, sw: 2 })}Checked</span>` : ''}
-          </a></li>`).join('')}</ul>`
-          : `<div class="empty-state">${ds.illustration('empty-journal', { size: 170, still: true })}<p class="lead">Nothing here yet. Add your first page and it shows up here.</p></div>`}
+        <div id="pagesCol">${pageRows(notes)}</div>
       </div>
     </div>`;
   const drop = $('#drop');
@@ -365,9 +403,17 @@ async function homePage() {
   ['dragenter', 'dragover'].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.add('over', 'nw-card--hatch'); }));
   ['dragleave', 'drop'].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.remove('over', 'nw-card--hatch'); }));
   drop.addEventListener('drop', e => e.dataTransfer.files[0] && upload(e.dataTransfer.files[0]));
+  let t;
+  live(['pages', 'mac'], () => { clearTimeout(t); t = setTimeout(async () => {   // a page was read, or the Mac woke up: show it without a reload
+    if (!$('#pagesCol')) return;
+    const [st2, notes2] = await Promise.all([api('/status'), api('/notes')]);
+    if (!$('#pagesCol')) return;
+    $('#readerHint').textContent = readerLine(st2); $('#pagesCol').innerHTML = pageRows(notes2); paintFoot();
+  }, 150); });
 }
 async function upload(f) {
-  const note = await guarded('Reading your handwriting…', 'Finding the page first, then the words.', () =>
+  const cloud = !!window.MS_BACKEND;
+  const note = await guarded(cloud ? 'Saving your photo…' : 'Reading your handwriting…', cloud ? 'Shrinking it to fit, then sending it.' : 'Finding the page first, then the words.', () =>
     api('/notes', { method: 'POST', headers: { 'Content-Type': f.type || 'application/octet-stream' }, body: f }));
   if (note) location.hash = '#/note/' + note.id;
 }
@@ -381,6 +427,7 @@ async function notePage(id) {
   paintShell('note'); paintBackdrop(7, { variant: 'confetti' });
   const note = await guarded('Opening your page…', '', () => api('/notes/' + id));
   if (!note) { location.hash = '#/'; return; }
+  if (note.status && note.status !== 'ready') return waitingPage(note);
   Object.assign(S, { note, draft: clone(note.page), dirty: false, mode: 'view', tool: 'select', sel: null, from: null, wipe: 50, preview: null, photoV: Date.now() });
   app.innerHTML = `
     <div class="note-head">
@@ -419,7 +466,7 @@ async function notePage(id) {
     try { const n = await send('PUT', `/notes/${S.note.id}`, { title: e.target.value }); S.note.title = n.title; e.target.value = n.title; fitTitle(); }
     catch (err) { oops(err); }
   };
-  $('#delBtn').onclick = deleteNote;
+  $('#delBtn').onclick = () => deleteNote();
   $('#shareBtn').onclick = openShare;
   $('#toNb').hidden = !HAS_NB;
   $('#toNb').onclick = addToNotebook;
@@ -428,6 +475,42 @@ async function notePage(id) {
   $('#save').onclick = saveDraft;
   wireViewer();
   renderAll();
+}
+/** A photo the Mac has not read yet (or could not): the photo, what is happening to it, and a way out. */
+function waitingPage(note) {
+  const id = note.id;
+  const paint = n => {
+    const failed = n.status === 'failed', mac = window.MS_BACKEND.macState();
+    const msg = failed ? esc(n.error || 'The Mac could not read this photo.') + ' Try again, or add a clearer photo.'
+      : mac.online ? 'Your Mac is reading this page. It shows up here when it is done.'
+      : `Your Mac is off, so this page is waiting${mac.seen ? ` (it was last on ${ago(mac.seen)})` : ''}. It gets read as soon as the Mac is on. Nothing is lost.`;
+    app.innerHTML = `
+      <div class="note-head">
+        <a class="nw-ib nw-ib--soft" href="#/" aria-label="Back to your pages" title="Back to your pages">${ico('arrow-left', { size: 22, sw: 1.6 })}</a>
+        <div class="note-title-wrap"><h1 class="title" style="margin:0">${failed ? 'Couldn’t read <em>this page</em>' : 'Waiting to be <em>read</em>'}</h1>
+          <p class="nw-label">${esc(fmtDate(n.created))}</p></div>
+        <div class="note-actions">
+          ${failed ? `<button class="nw-btn nw-btn--secondary" id="again" type="button">Try again</button>` : ''}
+          <button class="nw-btn nw-btn--ghost" id="delBtn" type="button">${ico('trash-2', { size: 20, cls: 'nw-btn__icon' })}<span>Delete</span></button>
+        </div>
+      </div>
+      <div class="note-grid">
+        <section class="page-col" aria-label="The photo"><div class="frame"><div class="viewer"><img class="ph" alt="Photo of your handwritten page" ${photoAttr(id)}></div></div></section>
+        <section class="sense-col"><div class="nw-card nw-card--soft notice" style="--nw-s:var(--${failed ? 'blush' : 'sky'}-soft)">${ico(failed ? 'triangle-alert' : 'info', { size: 22 })}<p>${msg}</p></div></section>
+      </div>`;
+    $('#delBtn').onclick = () => deleteNote(id);
+    const again = $('#again'); if (again) again.onclick = async () => { await guarded('Sending it again…', '', () => send('POST', `/notes/${id}/reread`, {})); refresh(); };
+    window.MS_BACKEND.hydrate();
+  };
+  const refresh = async () => {
+    const n = await api('/notes/' + id).catch(() => null);
+    if (!n) { location.hash = '#/'; return; }
+    if (!n.status || n.status === 'ready') { toast('Your page is ready.', { mood: 'joyful' }); return notePage(id); }
+    paint(n);
+  };
+  S.note = null; S.dirty = false;
+  paint(note);
+  live(['pages', 'mac'], refresh);
 }
 function renderAll() { renderMeta(); renderModebar(); renderNotices(); renderViewer(); renderTools(); renderInspector(); renderSense(); renderSavebar(); }
 function renderMeta() { $('#metaLine').textContent = label(fmtDate(S.note.created), 'Read by ' + (S.note.source === 'gemini' ? 'Gemini' : 'Apple Vision')); }
@@ -468,7 +551,7 @@ function renderViewer() {
   v.className = 'viewer' + (fix ? ' fix' : '') + (fix && S.tool === 'add' ? ' adding' : '');
   if (!v.dataset.built || v.dataset.v !== String(S.photoV)) {
     v.dataset.built = 1; v.dataset.v = S.photoV;
-    v.innerHTML = `<img class="ph" alt="Photo of your handwritten page" src="/api/notes/${n.id}/photo?v=${S.photoV}">
+    v.innerHTML = `<img class="ph" alt="Photo of your handwritten page" ${photoAttr(n.id, S.photoV)}>
       <div class="typed" id="typed"></div><div class="rule" id="rule"></div><div class="ovl" id="ovl"></div>`;
   }
   $('#typed').innerHTML = (S.preview || n).clean_html;
@@ -605,6 +688,7 @@ async function reread(opts) {
   if ((S.dirty || S.note.edited) && !await ask({ title: 'Read the page <em>again?</em>', body: 'Reading again throws away the corrections you made to this page.', yes: 'Read again', no: 'Keep my edits' })) return;
   const n = await guarded('Reading again…', 'Finding the page first, then the words.', () => send('POST', `/notes/${S.note.id}/reread`, opts));
   if (!n) return;
+  if (n.status && n.status !== 'ready') { S.dirty = false; toast('Sent to your Mac to read again.', { icon: 'info' }); return notePage(S.note.id); }
   Object.assign(S, { note: n, draft: clone(n.page), dirty: false, sel: null, from: null, preview: null, photoV: Date.now() });
   renderAll();
 }
@@ -684,9 +768,9 @@ function renderSense() {
 }
 function renderSavebar() { $('#savebar').hidden = !S.dirty; }
 
-async function deleteNote() {
+async function deleteNote(id = S.note.id) {
   if (!await ask({ title: 'Delete this <em>page?</em>', body: 'This removes the photo, the notes, and what the profile learned from them.', yes: 'Delete page', danger: true })) return;
-  const ok = await guarded('Deleting…', '', () => send('DELETE', `/notes/${S.note.id}`));
+  const ok = await guarded('Deleting…', '', () => send('DELETE', `/notes/${id}`));
   if (ok) { S.dirty = false; toast('Page deleted.', { icon: 'trash-2' }); location.hash = '#/'; }
 }
 
@@ -705,11 +789,11 @@ async function openShare() {
   });
   if (!choice) return;
   if (S.dirty) { await saveDraft(); if (S.dirty) return; }
-  if (choice === 'html') location.href = `/api/notes/${id}/share.html${data.photo ? '?photo=1' : ''}`;
-  else if (choice === 'md') location.href = `/api/notes/${id}/share.md`;
+  if (choice === 'html') download(`/notes/${id}/share.html${data.photo ? '?photo=1' : ''}`);
+  else if (choice === 'md') download(`/notes/${id}/share.md`);
   else {
     try { const md = await api(`/notes/${id}/share.md`); await navigator.clipboard.writeText(md); toast('Copied. Paste it into a message.', { mood: 'joyful' }); }
-    catch { location.href = `/api/notes/${id}/share.md`; toast("The clipboard wasn't available, so the file is downloading instead.", { icon: 'info' }); }
+    catch { download(`/notes/${id}/share.md`); toast("The clipboard wasn't available, so the file is downloading instead.", { icon: 'info' }); }
   }
 }
 
@@ -721,6 +805,8 @@ async function profilePage() {
   app.innerHTML = `
     <h1 class="page-h">How you<br><em>write</em></h1>
     <p class="lead">What the app has picked up from the pages you checked or corrected: ${plural(p.sources.notes, 'page')} of yours and ${plural(p.sources.labeled, 'labeled page')}.</p>
+    ${window.MS_BACKEND && p.learned === false ? `<p class="hint">Your Mac hasn't shared what it has learned yet, so this is where it starts. It fills in the next time the Mac is on.</p>` : ''}
+    ${window.MS_BACKEND && p.pending ? `<p class="hint">${plural(p.pending, 'change')} you made here will reach your profile when your Mac is next on.</p>` : ''}
     <div class="prof">
       <div>
         <section>
@@ -759,7 +845,11 @@ async function profilePage() {
           ${p.vocab.length ? `<ul class="vocab">${p.vocab.map(([w]) => `<li class="tag">${esc(w)}</li>`).join('')}</ul>` : '<p class="hint">None yet.</p>'}
         </section>
       </div>
-    </div>`;
+    </div>
+    ${window.MS_BACKEND ? `<section class="prof-account"><h2 class="section-h">Your <em>account</em></h2>
+      <p class="hint" style="margin-top:0">Signed in as ${esc(window.MS_BACKEND.account.email)}.</p>
+      <button class="nw-btn nw-btn--secondary" id="signOut" type="button"><span>Sign out</span></button></section>` : ''}`;
+  const so = $('#signOut'); if (so) so.onclick = () => window.MS_BACKEND.account.signOut();
   const sh = $('#sh'), rows = Object.entries(p.shorthand);
   const addRow = (k = '', v = '') => {
     const li = document.createElement('li');
@@ -770,13 +860,14 @@ async function profilePage() {
   $('#addSh').onclick = () => addRow();
   $('#saveProf').onclick = async () => {
     const shorthand = {}; $$('li', sh).forEach(li => { const [a, b] = $$('input', li); if (a.value.trim() && b.value.trim()) shorthand[a.value.trim()] = b.value.trim(); });
-    try { await send('PUT', '/profile', { shorthand, action_cues: $('#cues').value.split(',') }); toast('Saved. New pages will use these.', { mood: 'joyful' }); } catch (e) { oops(e); }
+    try { await send('PUT', '/profile', { shorthand, action_cues: $('#cues').value.split(',') }); toast(window.MS_BACKEND && !window.MS_BACKEND.macState().online ? 'Saved. Your Mac applies it next time it is on.' : 'Saved. New pages will use these.', { mood: 'joyful' }); } catch (e) { oops(e); }
   };
   $$('[data-forget]').forEach(b => b.onclick = async () => { await send('PUT', '/profile', { forget: [b.dataset.forget] }); toast('Forgotten.', { icon: 'check' }); profilePage(); });
 }
 
 /* ---------- notebooks (an added section: see web/canvas.js) ---------- */
-const canvasCtx = { ds, ico, esc, send, api, toast, oops, sheet, ask, guarded, plural, fmtDate, go: h => { location.hash = h; } };
+const canvasCtx = { ds, ico, esc, send, api, toast, oops, sheet, ask, guarded, plural, fmtDate, go: h => { location.hash = h; }, download,
+  get cloud() { return !!window.MS_BACKEND; }, get assetUrl() { return window.MS_BACKEND && window.MS_BACKEND.assetUrl; } };   // the website's backend arrives after sign-in
 
 async function newNotebook() {
   const nb = await guarded('Opening a fresh page…', '', () => send('POST', '/notebooks', {}));
@@ -802,8 +893,8 @@ async function canvasPage(id) {
   paintShell('canvas');
   const nbk = await guarded('Opening your notebook…', '', () => api('/notebooks/' + id));
   if (!nbk) { location.hash = '#/notebooks'; return; }
-  if (!document.querySelector('link[href="/web/canvas.css"]')) document.head.insertAdjacentHTML('beforeend', '<link rel="stylesheet" href="/web/canvas.css">');
-  const { mountCanvas } = await import('/web/canvas.js');
+  if (!document.querySelector('link[href="web/canvas.css"]')) document.head.insertAdjacentHTML('beforeend', '<link rel="stylesheet" href="web/canvas.css">');
+  const { mountCanvas } = await import('./web/canvas.js');
   app.innerHTML = '';
   activeCanvas = mountCanvas(app, nbk, canvasCtx);
 }
@@ -819,8 +910,11 @@ async function addToNotebook() {
 }
 
 (async () => {
+  if (window.MS_BOOT) await window.MS_BOOT;   // the website signs you in first
+  if (window.MS_BACKEND) window.MS_BACKEND.subscribe(['mac'], paintFoot);
+  window.addEventListener('ms:notice', e => toast(e.detail.message, { icon: 'info' }));
   try { HAS_NB = !!(await api('/status')).notebooks; } catch { HAS_NB = false; }
-  if (HAS_NB) document.head.insertAdjacentHTML('beforeend', '<link rel="stylesheet" href="/web/canvas.css">');
+  if (HAS_NB) document.head.insertAdjacentHTML('beforeend', '<link rel="stylesheet" href="web/canvas.css">');
   route();
 })();
 </script>

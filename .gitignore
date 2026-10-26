@@ -31,3 +31,10 @@ data/preds/
 credentials.json
 service-account*.json
 firebase-key*.json
+
+# Cloud site: build output and tools
+public/
+sense/cloud/node_modules/
+firestore-debug.log
+ui-debug.log
+firebase-debug.log

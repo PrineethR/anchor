@@ -295,8 +295,8 @@ class StaticTests(AppTest):
     def test_the_page_links_the_system_and_has_its_icons_filled_in(self):
         _, html, _ = self.call("GET", "/", raw=True)
         html = html.decode()
-        self.assertIn('href="/static/noteworthy.css"', html)
-        self.assertIn("from '/static/ds.js'", html)
+        self.assertIn('href="static/noteworthy.css"', html)   # relative, so the same page works from a folder of a domain
+        self.assertIn("from './static/ds.js'", html)
         for placeholder in ("__ICONS__", "__SHARE_CSS__", "__CANVAS_CSS__"):
             self.assertNotIn(placeholder, html)
         self.assertIn('"trash-2"', html)  # the system's other glyphs, beyond the ones ds.js carries
