@@ -25,7 +25,7 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
 from harness.schema import parse_page, validate
-from . import canvas, engine, meaning, narrate, notebooks, share, theme
+from . import canvas, engine, firestore_sync, meaning, narrate, notebooks, share, theme
 from .profile import Profile, style_stats
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -92,14 +92,17 @@ def _slug(text: str) -> str:
 class Store:
     """All the app's state and rules, with no HTTP in it."""
 
-    def __init__(self, home: Path, labeled: Path | None = None):
+    def __init__(self, home: Path, labeled: Path | None = None, sync: firestore_sync.SyncWorker | None = None):
         self.home = home
         self.labeled = labeled or ROOT / "data" / "labeled"
+        self.sync = sync
         self.home.mkdir(parents=True, exist_ok=True)
         self.lock = threading.RLock()
         self.profile = Profile.load(home / "profile.json")
         if self.labeled.exists() and self.profile.learn_labeled(self.labeled):
             self.profile.save()
+        if self.sync and (home / "profile.json").exists():
+            self.sync.schedule_profile(home / "profile.json")
 
     # --- notes -------------------------------------------------------------------
 
@@ -161,6 +164,9 @@ class Store:
             self._read_into(nid, d, flat["ocr"], meta)
             meta["title"] = meaning.make_sense(_read(d / "page.json"), self.profile.data["action_cues"])["title"]
             _write(d / "meta.json", meta)
+            if self.sync:
+                self.sync.schedule_note(d)
+                self.sync.schedule_profile(self.home / "profile.json")
         except Exception:
             shutil.rmtree(d, ignore_errors=True)
             with self.lock:
@@ -194,6 +200,9 @@ class Store:
             self.profile.learn_note(nid, _read(d / "engine.json"), _read(d / "shown.json"), _read(d / "page.json"),
                                     meta["confirmed"])
             self.profile.save()
+            if self.sync:
+                self.sync.schedule_note(d)
+                self.sync.schedule_profile(self.home / "profile.json")
         return self._view(nid)
 
     def reread(self, nid: str, rotate: bool = False, crop: bool | None = None) -> dict:
@@ -210,6 +219,8 @@ class Store:
             engine.rotate_flat(d / "flat.jpg")
             meta.update(turns=(meta.get("turns", 0) + 1) % 4, sure=True)
         self._read_into(nid, d, ocr, meta)
+        if self.sync:
+            self.sync.schedule_note(d)
         return self._view(nid)
 
     def narrate(self, nid: str) -> dict:
@@ -231,6 +242,9 @@ class Store:
             shutil.rmtree(d)
             self.profile.forget_note(nid)
             self.profile.save()
+            if self.sync:
+                self.sync.schedule_delete_note(nid)
+                self.sync.schedule_profile(self.home / "profile.json")
 
     def photo(self, nid: str) -> bytes:
         return (self.dir(nid) / "flat.jpg").read_bytes()
@@ -268,11 +282,35 @@ class Store:
             for raw in body.get("forget", []):
                 self.profile.forget_fix(str(raw))
             self.profile.save()
+            if self.sync:
+                self.sync.schedule_profile(self.home / "profile.json")
         return self.profile_view()
 
+    def sync_all(self) -> int:
+        """Schedule all existing local notes, notebooks, and profile to sync."""
+        if not self.sync:
+            return 0
+        count = 0
+        for d in self.home.iterdir():
+            if d.is_dir() and ID.match(d.name) and (d / "page.json").exists():
+                self.sync.schedule_note(d)
+                count += 1
+        nb_dir = self.home / "notebooks"
+        if nb_dir.is_dir():
+            for d in nb_dir.iterdir():
+                if d.is_dir() and ID.match(d.name) and (d / "notebook.json").exists():
+                    self.sync.schedule_notebook(d)
+                    count += 1
+        if (self.home / "profile.json").exists():
+            self.sync.schedule_profile(self.home / "profile.json")
+        return count
+
     def status(self) -> dict:
-        return {"gemini": bool(engine.gemini_key()), "vision": engine.vision_ready(),
-                "labeled": len(list(self.labeled.glob("*.json"))) if self.labeled.exists() else 0}
+        st = {"gemini": bool(engine.gemini_key()), "vision": engine.vision_ready(),
+              "labeled": len(list(self.labeled.glob("*.json"))) if self.labeled.exists() else 0}
+        if self.sync:
+            st["sync"] = self.sync.status()
+        return st
 
 
 def render_ui() -> str:
@@ -422,6 +460,12 @@ class Handler(BaseHTTPRequestHandler):
         if not parts or parts[0] != "api":
             raise NotFound(self.path)
         r = parts[1:]
+        if r == ["sync"]:
+            if method == "GET":
+                return self._json(s.sync.status() if s.sync else {"enabled": False})
+            if method == "POST":
+                count = s.sync_all()
+                return self._json({"scheduled": count, "status": s.sync.status() if s.sync else {"enabled": False}})
         if r == ["status"] and method == "GET":
             return self._json({**s.status(), "notebooks": self.nbs is not None})
         if r and r[0] == "notebooks":
@@ -462,8 +506,12 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def make_server(home: Path, host: str = "127.0.0.1", port: int = 8765, labeled: Path | None = None,
-                with_notebooks: bool = True) -> ThreadingHTTPServer:
-    store = Store(home, labeled)
+                with_notebooks: bool = True, with_sync: bool = False) -> ThreadingHTTPServer:
+    sync_worker = None
+    if with_sync:
+        sync_worker = firestore_sync.SyncWorker()
+        sync_worker.start()
+    store = Store(home, labeled, sync=sync_worker)
     handler = type("BoundHandler", (Handler,), {
         "store": store,
         "nbs": notebooks.Notebooks(store) if with_notebooks else None,
@@ -479,12 +527,15 @@ def main(argv=None) -> int:
     ap.add_argument("--port", type=int, default=8765)
     ap.add_argument("--no-labeled", action="store_true", help="don't learn vocabulary from data/labeled")
     ap.add_argument("--no-notebooks", action="store_true", help="run without the notebooks canvas: only the photo pages")
+    ap.add_argument("--sync", dest="sync", action="store_true", default=True, help="sync notes and notebooks to Cloud Firestore in background")
+    ap.add_argument("--no-sync", dest="sync", action="store_false", help="disable background sync to Cloud Firestore")
     a = ap.parse_args(argv)
     labeled = ROOT / "data" / "no-labeled" if a.no_labeled else None
-    server = make_server(Path(a.home), a.host, a.port, labeled, with_notebooks=not a.no_notebooks)
+    server = make_server(Path(a.home), a.host, a.port, labeled, with_notebooks=not a.no_notebooks, with_sync=a.sync)
     st = server.RequestHandlerClass.store.status()
     reader = "Gemini" if st["gemini"] else "Apple Vision (text only, no arrows)" if st["vision"] else "NONE: set GEMINI_API_KEY"
-    print(f"Make sense on http://{a.host}:{a.port}  ·  notes in {a.home}  ·  reading with {reader}", flush=True)
+    sync_desc = f"  ·  sync to Firestore ({firestore_sync.DEFAULT_PROJECT}) ON" if a.sync else ""
+    print(f"Make sense on http://{a.host}:{a.port}  ·  notes in {a.home}  ·  reading with {reader}{sync_desc}", flush=True)
     try:
         server.serve_forever()
     except KeyboardInterrupt:

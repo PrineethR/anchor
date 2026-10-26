@@ -52,11 +52,14 @@ Any 3 of the 4 markers are enough, in any orientation. Settles with a hand or ob
 The same engine for a different job: take a photo of a page in your notebook, see what it says, fix what it got wrong, and send it to someone.
 
 ```bash
-.venv/bin/python -m sense.app                  # http://127.0.0.1:8765
+.venv/bin/python -m sense.app                  # http://127.0.0.1:8765 (syncs to Firestore in background)
+.venv/bin/python -m sense.app --no-sync        # offline local-only mode
 .venv/bin/python -m sense.app --host 0.0.0.0   # also reachable from your phone on the same Wi-Fi
 ```
 
-There is no sign-in, so only use `--host 0.0.0.0` on a network you trust. Everything stays on this Mac; Gemini is called only if `GEMINI_API_KEY` is set.
+There is no sign-in, so only use `--host 0.0.0.0` on a network you trust. Everything is processed locally on this Mac; Gemini is called only if `GEMINI_API_KEY` is set.
+
+When `--sync` is enabled (default), processed notes, threads, infinite canvas notebooks, and your handwriting profile are uploaded slowly and asynchronously to **Cloud Firestore** (`anchor-notes-prineeth`). Local processing is completely decoupled from network latency, so capturing and reading remain instant.
 
 1. **Add a page.** Drop a photo or take one on your phone. A sheet with the corner markers is flattened by them; any other photo has the page cut out by its edges, or is used whole (a button switches). The page is turned upright using the OCR itself: lines that come back wider than tall are running along the page. It can't tell upright from upside down, so when the photo was sideways it says so and offers *Rotate*.
 2. **Read.** With a Gemini key: Gemini, given your checked pages as examples and a paragraph about how you write. Without: Apple Vision, which reads words only. No arrows, no underlines, so you draw those in.

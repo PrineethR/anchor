@@ -280,6 +280,8 @@ class Notebooks:
             color = next((c for c in COLORS if c not in used), COLORS[len(used) % len(COLORS)])
             nb = blank(nid, (title or "").strip()[:120] or "Untitled notebook", color)
             self._write(nb)
+            if getattr(self.store, "sync", None):
+                self.store.sync.schedule_notebook(self.dir(nb["id"]))
         return self._view(nb)
 
     def get(self, nid: str) -> dict:
@@ -309,6 +311,8 @@ class Notebooks:
             nb["rev"] += 1
             nb["updated"] = _now()
             self._write(nb)
+            if getattr(self.store, "sync", None):
+                self.store.sync.schedule_notebook(self.dir(nb["id"]))
         sense = self.sense_of(nb)
         return {"rev": nb["rev"], "updated": nb["updated"], "sense": sense,
                 "sense_html": share.sense_html(sense, empty="No arrows yet. Draw one between two notes.")}
@@ -316,6 +320,8 @@ class Notebooks:
     def delete(self, nid: str) -> None:
         with self.lock:
             shutil.rmtree(self.dir(nid))
+            if getattr(self.store, "sync", None):
+                self.store.sync.schedule_delete_notebook(nid)
 
     # --- photos ------------------------------------------------------------------------------
 
