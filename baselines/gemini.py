@@ -34,6 +34,9 @@ DEFAULT_MODEL = "gemini-2.5-pro"
 API = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 GRID = 1000
 
+GEN_CONFIG: dict = {}      # extra generationConfig for a run: {"thinkingConfig": {...}, "mediaResolution": "..."}, set by baselines.try_gemini
+LAST_USAGE: dict = {}      # the token counts Google reported for the most recent request
+
 PROMPT = """\
 This is a photo of a handwritten concept map on a sheet of paper, already
 flattened to the page. Turn it into structure.
@@ -63,6 +66,12 @@ LINKS (every arrow)
 Ignore anything that is not ink on the sheet (sticky notes, desk, objects).
 box_2d is [ymin, xmin, ymax, xmax] on a 0-1000 grid over the whole image, tight
 around the ink. Ids are short and unique, e.g. t1, s1, d1, l1.
+
+ROTATION
+- page_rotation: a phone photo may be sideways or upside down. Say how many degrees
+  clockwise the photo would have to be turned for the writing to read upright, left
+  to right: "0", "90", "180" or "270". Keep every box_2d exactly where the ink is in
+  the photo as given; do not rotate the boxes yourself.
 """
 
 _BOOL = {"type": "BOOLEAN"}
@@ -70,6 +79,7 @@ _STR = {"type": "STRING"}
 RESPONSE_SCHEMA = {
     "type": "OBJECT",
     "properties": {
+        "page_rotation": {"type": "STRING", "enum": ["0", "90", "180", "270"]},
         "elements": {
             "type": "ARRAY",
             "items": {
@@ -110,7 +120,7 @@ RESPONSE_SCHEMA = {
         },
     },
     "required": ["elements", "links"],
-    "propertyOrdering": ["elements", "links"],
+    "propertyOrdering": ["page_rotation", "elements", "links"],
 }
 
 
@@ -136,6 +146,7 @@ def build_body(image: Path, prompt: str = PROMPT, examples=()) -> dict:
             "temperature": 0,
             "responseMimeType": "application/json",
             "responseSchema": RESPONSE_SCHEMA,
+            **GEN_CONFIG,
         },
     }
 
@@ -163,6 +174,8 @@ def post(body: dict, model: str, key: str, retries: int = 3) -> str:
                 time.sleep(5 * 2 ** attempt)
                 continue
             raise RuntimeError(f"Gemini HTTP {e.code}: {detail}") from None
+    LAST_USAGE.clear()
+    LAST_USAGE.update(resp.get("usageMetadata") or {})
     cands = resp.get("candidates") or []
     if not cands:
         raise RuntimeError(f"no candidates: {json.dumps(resp.get('promptFeedback', resp))[:500]}")

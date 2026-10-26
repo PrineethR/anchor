@@ -48,3 +48,24 @@ export async function preparePhoto(blob, { side = FULL_SIDE } = {}) {
   src.close?.();
   return { full: await bytes(out), thumb: await bytes(t), w: c.width, h: c.height };
 }
+
+/** The photo turned clockwise by whole quarter turns (what the Rotate button and Gemini's "this one is sideways" need): new JPEG bytes, a new thumbnail, and the new size. */
+export async function turnPhoto(photo, quarterTurns) {
+  const n = ((quarterTurns % 4) + 4) % 4;
+  const src = await bitmap(new Blob([photo], { type: 'image/jpeg' }));
+  const w0 = src.width || src.naturalWidth, h0 = src.height || src.naturalHeight;
+  const sideways = n % 2 === 1;
+  const c = document.createElement('canvas');
+  c.width = sideways ? h0 : w0; c.height = sideways ? w0 : h0;
+  const g = c.getContext('2d');
+  g.imageSmoothingQuality = 'high';
+  g.translate(n === 1 || n === 2 ? c.width : 0, n === 2 || n === 3 ? c.height : 0);
+  g.rotate(n * Math.PI / 2);
+  g.drawImage(src, 0, 0);
+  let out = null;
+  for (const q of [0.92, 0.85, 0.75, 0.62]) { const b = await jpeg(c, q); if (b.size <= LIMIT) { out = b; break; } }
+  if (!out) throw new Error('That photo is too detailed to store.');
+  const t = await jpeg(draw(c, THUMB_SIDE), 0.7);
+  src.close?.();
+  return { full: await bytes(out), thumb: await bytes(t), w: c.width, h: c.height };
+}

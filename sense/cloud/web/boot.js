@@ -5,6 +5,7 @@ import * as F from './lib/firebase.js';
 import { createBackend } from './backend.js';
 import { configure } from './render.js';
 import * as pwa from './pwa.js';
+import * as reader from './reader.js';
 
 window.MS_PWA = pwa;
 
@@ -28,8 +29,9 @@ const wordmark = '<p class="wordmark-link" style="margin:0">Make <em>sense</em><
 
 window.MS_BOOT = (async () => {
   gate(`${wordmark}<p class="lead">Opening your notes…</p>`);
-  const [cfg, theme] = await Promise.all([fetch('config.json').then(r => r.json()), fetch('theme.json').then(r => r.json())]);
+  const [cfg, theme, rd] = await Promise.all([fetch('config.json').then(r => r.json()), fetch('theme.json').then(r => r.json()), fetch('reader.json').then(r => r.json())]);
   configure(theme);
+  reader.configure(rd);
   const app = F.initializeApp(cfg.firebase);
   const auth = F.getAuth(app);
   let db;

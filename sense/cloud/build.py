@@ -20,6 +20,8 @@ from pathlib import Path
 import cv2
 import numpy as np
 
+from baselines import gemini, try_gemini
+
 from .. import app, canvas, share, theme
 
 HERE = Path(__file__).resolve().parent
@@ -113,6 +115,8 @@ def build(out: Path, emulator: bool = False, config: Path | None = None) -> list
                             ("icon-maskable-512.png", 512, 0.74), ("favicon-32.png", 32, 1.0)):
         write(out / "icons" / name, draw_icon(px, inset))
     write(out / "manifest.webmanifest", json.dumps(manifest(), indent=1))
+    # The website reads handwriting with the same instructions, answer shape and prices as the Python (one source for each).
+    write(out / "reader.json", json.dumps({"prompt": gemini.PROMPT, "schema": gemini.RESPONSE_SCHEMA, "prices": try_gemini.PRICES, "grid": gemini.GRID}))
     write(out / "config.json", json.dumps({"firebase": firebase, "emulator": EMULATOR if emulator else None}))
     write(out / "theme.json", json.dumps({"threadMarks": [m["svg"] for m in theme._prerendered()["thread_shapes"]], "signOff": theme.sign_off()}))
     write(out / "export-css.json", json.dumps({"themeCss": theme.stylesheet(embed_fonts=True), "shareCss": share.CSS, "canvasCss": canvas.CSS}))

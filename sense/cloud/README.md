@@ -12,10 +12,34 @@ The same app, at an address you can open on your phone anywhere, behind a Google
 └───────────────────┘                                                                └───────────────────────────┘
 ```
 
-**What works when the Mac is off:** opening every page and notebook you already have (and, once opened on a device, offline too), editing words,
-writing and drawing in notebooks, exporting to HTML or Markdown, changing the profile. **What waits for the Mac:** reading a new photo (it sits as
-"Waiting for your Mac", with its photo, and is read as soon as the Mac is on), reading a page again, and the profile learning from your edits.
-The Mac is the only thing that can read handwriting, because Apple Vision only exists on macOS.
+**Two ways a photo gets read.** With a Gemini key saved on a device (*You → How pages are read*), that device reads the page itself, straight from the photo,
+and the Mac is not involved: it works from anywhere with the Mac off, and it finds arrows and underlines. Without a key, a new photo waits as "Waiting for your Mac"
+and the Mac reads it with Apple Vision when it is on (words only; you draw the arrows). Opening everything already read, editing words, writing in notebooks,
+exporting and changing the profile never need the Mac.
+
+## Reading with Gemini on the device
+
+The browser asks Google directly (`generativelanguage.googleapis.com`; Google allows that from `prineethr.com`), with the key in a header. The key lives in that browser's
+local storage under `makesense.gemini`, is never sent to Firestore, and each device needs its own. The answer is turned into a page by `reader.js`, a line-for-line port of
+`baselines/gemini.py` held to the Python's output by tests; the instructions and the answer's shape come from the Python through the build (`reader.json`), so there is one copy.
+
+- **Which model.** *Better* (the default) is `gemini-3.6-flash` with thinking set to low, falling back to `gemini-3.8-flash`, then `gemini-flash-latest`, if the key cannot use one.
+  *Cheaper* is `gemini-3.5-flash-lite`. On the one sample page I scored, Better found about 90% of the arrows and Cheaper about 70 to 85%; both found over 90% of the words.
+  That is one page and the results moved by 15 points between two runs of the same model, so treat them as a range. Never lower the photo's detail: it halved the arrows found.
+- **What it costs.** Each page records its tokens and an estimate (`readUsd`, shown as "about ₹1.2" on the page and as a monthly total on *You*). At list prices that is roughly
+  ₹1 to ₹2 a page on Better and ₹0.6 to ₹1 on Cheaper (rupees at an assumed ₹95 to the dollar); the Flash models' prices double on 1 January 2027. About 3 pages a day is ₹100 to ₹320 a month.
+  Thinking is billed as output, which is why low thinking is five times cheaper than the default.
+- **What Google sees.** Every page added on a device with a key goes to Google. On a free key Google may use that content to improve its products; a paid key is not used that way.
+- **When it cannot read.** No connection, or no key: the page goes to the Mac's queue (and is read here once it has waited three minutes with the Mac off, if a key is saved).
+  A wrong or refused key, no free requests left, a model the key cannot use, or Google being slow each say what happened on the page, with *Try again* and *Use my Mac*.
+  A page left "reading" because the tab closed is picked up again after two and a half minutes. Two devices cannot read the same page: the take-over is a transaction.
+- **Rotate and Read again.** Gemini says which way up the photo is, and the stored photo is turned to match. *Rotate* on a Gemini-read page turns it here without asking Google (free);
+  *Read again* asks once more and costs the same as the first time; *Read with Gemini* does the same for a page the Mac read.
+- **What it does not do yet.** The shorthand and misreadings the Mac has learned are not applied to a Gemini reading; the Mac only passes Gemini a paragraph about how you write
+  (`hints`, published with the profile) and the Mac still learns from your corrections. Pages Gemini reads are brought to the Mac when it is next on, for that learning.
+
+Test it without spending anything: `.venv/bin/python -m baselines.try_gemini` scores a model on the public sample page beside Apple Vision (with `--model`, `--thinking`, `--list-models`, and the tokens and cost per page).
+The browser side is tested in node against a pretend Google (`tests/test_cloud_reader.py`) and in real Chromium and WebKit (`tests/e2e/reader.mjs`).
 
 ## Setting it up (once)
 

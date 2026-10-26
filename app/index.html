@@ -457,9 +457,10 @@ window.addEventListener('beforeunload', e => { if (S.dirty) { e.preventDefault()
 
 /* ---------- home ---------- */
 function readerLine(st) {
+  if (st.cloud && st.reader?.here) return `This device reads new pages with Gemini, so your Mac can be off. It finds arrows and underlines. ${st.reader.month.pages ? `${plural(st.reader.month.pages, 'page')} this month, ${window.MS_BACKEND.reader.rupees(st.reader.month.usd)}.` : ''}`.trim();
   if (st.cloud) {
     const m = st.cloud.mac, w = st.cloud.waiting;
-    return m.online ? 'Your Mac is on. It reads each page you add, usually within a minute.'
+    return m.online ? 'Your Mac is on. It reads each page you add, usually within a minute. Add a Gemini key under You and this device reads them itself, arrows included.'
       : `Your Mac is off${m.seen ? `, last on ${ago(m.seen)}` : ''}. A page you add waits here and gets read when the Mac is back on. You can still open everything already read, and write in your notebooks.${w ? ` ${plural(w, 'page')} waiting.` : ''}`;
   }
   return st.gemini ? 'Reading with Gemini. It finds arrows and underlines as well as words.'
@@ -474,8 +475,8 @@ function pageRows(notes) {
     const meta = ready ? label(fmtDate(n.created), plural(n.threads, 'thread'), plural(n.loose, 'loose note'), n.actions ? plural(n.actions, 'to-do') : '') : fmtDate(n.created);
     return `<li><a class="nw-card nw-card--raised nw-card--interactive page-row" href="#/note/${n.id}">
       <img ${photoAttr(n.id, '', false)} alt="" loading="lazy">
-      <span><span class="t">${esc(ready ? n.title : n.status === 'failed' ? 'Couldn’t read this page' : 'A page waiting to be read')}</span><span class="nw-label">${esc(meta)}</span></span>
-      ${!ready ? (n.status === 'failed' ? badge('blush', 'triangle-alert', 'Couldn’t read') : n.unsent ? badge('sky', 'info', 'Not sent yet') : badge('tangerine', 'info', 'Waiting for your Mac')) : n.confirmed ? badge('mint', 'check', 'Checked') : ''}
+      <span><span class="t">${esc(ready ? n.title : n.status === 'failed' ? 'Couldn’t read this page' : n.status === 'reading' ? 'A page being read' : 'A page waiting to be read')}</span><span class="nw-label">${esc(meta)}</span></span>
+      ${!ready ? (n.status === 'failed' ? badge('blush', 'triangle-alert', 'Couldn’t read') : n.unsent ? badge('sky', 'info', 'Not sent yet') : n.status === 'reading' ? badge('sky', 'info', 'Reading…') : badge('tangerine', 'info', 'Waiting for your Mac')) : n.confirmed ? badge('mint', 'check', 'Checked') : ''}
     </a></li>`;
   }).join('')}</ul>`;
 }
@@ -548,7 +549,7 @@ async function sharedPage() {
 
 /* ---------- note ---------- */
 const S = { note: null, draft: null, dirty: false, mode: 'view', tool: 'select', sel: null, from: null, wipe: 50, preview: null, photoV: 0 };
-const HOW = { markers: 'Found the page by its corner markers.', edges: 'Cut the page out of the photo by its edges.', 'whole photo': 'Using the whole photo.' };
+const HOW = { gemini: 'Read straight from the photo by Gemini.', markers: 'Found the page by its corner markers.', edges: 'Cut the page out of the photo by its edges.', 'whole photo': 'Using the whole photo.' };
 window.MS = { S, renderAll: () => renderAll(), busy, toast };
 
 async function notePage(id) {
@@ -609,17 +610,19 @@ function waitingPage(note) {
   const id = note.id;
   const paint = n => {
     const failed = n.status === 'failed', mac = window.MS_BACKEND.macState();
-    const msg = failed ? esc(n.error || 'The Mac could not read this photo.') + ' Try again, or add a clearer photo.'
+    const gem = !!window.MS_BACKEND.reader.settings().key, reading = n.status === 'reading';
+    const msg = failed ? esc(n.error || 'This photo could not be read.') + (gem ? ' Try again, or hand it to your Mac.' : ' Try again, or add a clearer photo.')
+      : reading ? 'Gemini is reading this page. It usually takes under half a minute, and it shows up here when it is done.'
       : n.unsent ? 'This photo is saved on this device. It uploads as soon as you are back online, and then your Mac reads it.'
       : mac.online ? 'Your Mac is reading this page. It shows up here when it is done.'
       : `Your Mac is off, so this page is waiting${mac.seen ? ` (it was last on ${ago(mac.seen)})` : ''}. It gets read as soon as the Mac is on. Nothing is lost.`;
     app.innerHTML = `
       <div class="note-head">
         <a class="nw-ib nw-ib--soft" href="#/" aria-label="Back to your pages" title="Back to your pages">${ico('arrow-left', { size: 22, sw: 1.6 })}</a>
-        <div class="note-title-wrap"><h1 class="title" style="margin:0">${failed ? 'Couldn’t read <em>this page</em>' : 'Waiting to be <em>read</em>'}</h1>
+        <div class="note-title-wrap"><h1 class="title" style="margin:0">${failed ? 'Couldn’t read <em>this page</em>' : reading ? 'Reading <em>this page</em>' : 'Waiting to be <em>read</em>'}</h1>
           <p class="nw-label">${esc(fmtDate(n.created))}</p></div>
         <div class="note-actions">
-          ${failed ? `<button class="nw-btn nw-btn--secondary" id="again" type="button">Try again</button>` : ''}
+          ${failed ? `<button class="nw-btn nw-btn--secondary" id="again" type="button">Try again</button>${gem ? '<button class="nw-btn nw-btn--soft" id="toMac" type="button">Use my Mac</button><a class="nw-btn nw-btn--soft" href="#/profile">Reader settings</a>' : ''}` : ''}
           <button class="nw-btn nw-btn--ghost" id="delBtn" type="button">${ico('trash-2', { size: 20, cls: 'nw-btn__icon' })}<span>Delete</span></button>
         </div>
       </div>
@@ -628,7 +631,8 @@ function waitingPage(note) {
         <section class="sense-col"><div class="nw-card nw-card--soft notice" style="--nw-s:var(--${failed ? 'blush' : 'sky'}-soft)">${ico(failed ? 'triangle-alert' : 'info', { size: 22 })}<p>${msg}</p></div></section>
       </div>`;
     $('#delBtn').onclick = () => deleteNote(id);
-    const again = $('#again'); if (again) again.onclick = async () => { await guarded('Sending it again…', '', () => send('POST', `/notes/${id}/reread`, {})); refresh(); };
+    const again = $('#again'); if (again) again.onclick = async () => { await guarded(gem ? 'Reading it again…' : 'Sending it again…', '', () => send('POST', `/notes/${id}/reread`, gem ? { again: true } : {})); refresh(); };
+    const toMac = $('#toMac'); if (toMac) toMac.onclick = async () => { await guarded('Sending it to your Mac…', '', () => send('POST', `/notes/${id}/reread`, {})); refresh(); };
     window.MS_BACKEND.hydrate();
   };
   const refresh = async () => {
@@ -642,7 +646,7 @@ function waitingPage(note) {
   live(['pages', 'mac'], refresh);
 }
 function renderAll() { renderMeta(); renderModebar(); renderNotices(); renderViewer(); renderTools(); renderInspector(); renderSense(); renderSavebar(); }
-function renderMeta() { $('#metaLine').textContent = label(fmtDate(S.note.created), 'Read by ' + (S.note.source === 'gemini' ? 'Gemini' : 'Apple Vision')); }
+function renderMeta() { $('#metaLine').textContent = label(fmtDate(S.note.created), 'Read by ' + (S.note.source === 'gemini' ? 'Gemini' : 'Apple Vision'), S.note.read_cost); }
 
 function renderModebar() {
   const fix = S.mode === 'fix', tools = [['select', 'Select', 'crosshair'], ['add', 'Add word', 'plus'], ['arrow', 'Draw arrow', 'arrow-right']];
@@ -808,16 +812,18 @@ function renderTools() {
   const n = S.note;
   $('#pageTools').innerHTML = `
     <button class="nw-btn nw-btn--soft nw-btn--sm" id="rotBtn" type="button">Rotate</button>
-    ${n.how !== 'markers' ? `<button class="nw-btn nw-btn--soft nw-btn--sm" id="cropBtn" type="button">${n.crop ? 'Whole photo' : 'Find page edges'}</button>` : ''}
+    ${n.how !== 'markers' && n.source !== 'gemini' ? `<button class="nw-btn nw-btn--soft nw-btn--sm" id="cropBtn" type="button">${n.crop ? 'Whole photo' : 'Find page edges'}</button>` : ''}
+    ${n.can_read_again ? `<button class="nw-btn nw-btn--soft nw-btn--sm" id="againBtn" type="button">${n.source === 'gemini' ? 'Read again' : 'Read with Gemini'}</button>` : ''}
     <span class="how">${esc(HOW[n.how] || '')}</span>`;
   $('#rotBtn').onclick = () => reread({ rotate: true });
   const c = $('#cropBtn'); if (c) c.onclick = () => reread({ crop: !n.crop });
+  const ag = $('#againBtn'); if (ag) ag.onclick = () => reread({ again: true });
 }
 async function reread(opts) {
   if ((S.dirty || S.note.edited) && !await ask({ title: 'Read the page <em>again?</em>', body: 'Reading again throws away the corrections you made to this page.', yes: 'Read again', no: 'Keep my edits' })) return;
   const n = await guarded('Reading again…', 'Finding the page first, then the words.', () => send('POST', `/notes/${S.note.id}/reread`, opts));
   if (!n) return;
-  if (n.status && n.status !== 'ready') { S.dirty = false; toast('Sent to your Mac to read again.', { icon: 'info' }); return notePage(S.note.id); }
+  if (n.status && n.status !== 'ready') { S.dirty = false; toast(n.status === 'reading' ? 'Reading it again with Gemini.' : 'Sent to your Mac to read again.', { icon: 'info' }); return notePage(S.note.id); }
   Object.assign(S, { note: n, draft: clone(n.page), dirty: false, sel: null, from: null, preview: null, photoV: Date.now() });
   renderAll();
 }
@@ -868,6 +874,40 @@ function renderInspector() {
   $$('[data-rm]', box).forEach(b => b.onclick = () => { S.draft.links.splice(+b.dataset.rm, 1); touch(); renderOverlay(); renderInspector(); });
 }
 
+function readerBlock() {
+  const R = window.MS_BACKEND.reader, cur = R.settings(), u = R.usage();
+  const presets = Object.entries(R.presets).map(([id, p]) => `<label class="nw-tog" style="--nw-on:var(--action)"><input type="radio" name="preset" value="${id}" ${cur.preset === id ? 'checked' : ''}><span class="nw-cb">${ico('check', { size: 16, sw: 3 })}</span><span><b>${esc(p.label)}</b>: ${esc(p.cost)}</span></label>`).join('');
+  return `<section class="prof-reader"><h2 class="section-h">How pages are <em>read</em></h2>
+    <p class="lead" style="font-size:var(--t-body)">${cur.key
+      ? 'Pages you add on this device are read by Gemini, straight from the photo, so your Mac can be off. It finds arrows and underlines.'
+      : 'Pages are read by your Mac. Add a Gemini key and this device reads them itself: your Mac can be off, and arrows and underlines come through.'}</p>
+    <div class="nw-field"><label class="nw-field__label" for="gkey">Gemini key</label>
+      <div class="nw-field__box"><input type="password" id="gkey" autocomplete="off" spellcheck="false" placeholder="${cur.key ? '•••••••• saved on this device' : 'Paste it here'}"></div></div>
+    <p class="hint">Kept on this device only, never in your notes. Get one at aistudio.google.com/apikey. Each device needs its own.</p>
+    <div class="check-row" style="display:grid;gap:var(--s-2)">${presets}</div>
+    <div class="reader-actions" style="display:flex;gap:var(--s-2);flex-wrap:wrap;margin-top:var(--s-3)">
+      <button class="nw-btn nw-btn--primary" id="gSave" type="button"><span>${cur.key ? 'Save changes' : 'Save key'}</span></button>
+      ${cur.key ? '<button class="nw-btn nw-btn--ghost" id="gForget" type="button"><span>Remove key</span></button>' : ''}</div>
+    <p class="hint">Each page you add is sent to Google to be read. On a free key Google may use it to improve its products; a paid key is not used that way.${u.pages ? ` This month: ${plural(u.pages, 'page')} read, ${R.rupees(u.usd)}.` : ''}</p></section>`;
+}
+function wireReader() {
+  const box = $('.prof-reader'); if (!box) return;
+  const R = window.MS_BACKEND.reader;
+  $('#gSave').onclick = async () => {
+    const typed = $('#gkey').value.trim(), cur = R.settings(), key = typed || cur.key, preset = ($('input[name=preset]:checked', box) || {}).value;
+    if (!key) { toast('Paste a key first.', { icon: 'info' }); return; }
+    if (typed) {
+      const ok = await guarded('Checking the key…', '', () => R.check(typed));
+      if (!ok) return;
+      if (!ok.ok) { toast(ok.message, { icon: 'triangle-alert' }); return; }
+    }
+    R.save({ key, preset });
+    toast(typed ? 'Key saved. This device reads new pages with Gemini.' : 'Saved.', { mood: 'joyful' });
+    R.resume();
+    profilePage();
+  };
+  const f = $('#gForget'); if (f) f.onclick = async () => { if (await ask({ title: 'Remove the <em>key?</em>', body: 'This device goes back to leaving pages for your Mac. Your notes stay.', yes: 'Remove key' })) { R.forget(); toast('Key removed.', { icon: 'check' }); profilePage(); } };
+}
 function installBlock() {
   const P = window.MS_PWA; if (!P) return '';
   const where = P.platform();
@@ -987,12 +1027,14 @@ async function profilePage() {
         </section>
       </div>
     </div>
+    ${window.MS_BACKEND ? readerBlock() : ''}
     ${window.MS_BACKEND ? `<section class="prof-account"><h2 class="section-h">Your <em>account</em></h2>
       <p class="hint" style="margin-top:0">Signed in as ${esc(window.MS_BACKEND.account.email)}.</p>
       ${installBlock()}
       <button class="nw-btn nw-btn--secondary" id="signOut" type="button"><span>Sign out</span></button></section>` : ''}`;
   const inst = $('#install'); if (inst) inst.onclick = async () => { if (await window.MS_PWA.install()) toast('Installed. Open it from your home screen.', { mood: 'joyful' }); };
   const so = $('#signOut'); if (so) so.onclick = () => window.MS_BACKEND.account.signOut();
+  wireReader();
   const sh = $('#sh'), rows = Object.entries(p.shorthand);
   const addRow = (k = '', v = '') => {
     const li = document.createElement('li');

@@ -6,6 +6,7 @@ import { layout, renderHtml } from '../../sense/cloud/web/layout.js';
 import { makeSense } from '../../sense/cloud/web/meaning.js';
 import { blank, cleanItems, cleanLinks, importPage, thumbSvg, toPage } from '../../sense/cloud/web/notebook.js';
 import { configure, senseHtml, toHtml, toMarkdown } from '../../sense/cloud/web/render.js';
+import { buildRequest, configure as configureReader, geminiToPage, scalePage } from '../../sense/cloud/web/reader.js';
 
 const fx = JSON.parse(readFileSync(process.argv[2], 'utf8'));
 const fresh = (used) => { let c = 0; return prefix => { for (;;) { const cand = prefix + (++c).toString(16).padStart(6, '0'); if (!used.has(cand)) { used.add(cand); return cand; } } }; };
@@ -21,6 +22,9 @@ const ops = {
   cleanItems: raw => cleanItems(raw),
   cleanLinks: (raw, ids) => cleanLinks(raw, new Set(ids)),
   toPage: (nb, withFree) => toPage(nb, withFree),
+  geminiToPage: (raw, id) => geminiToPage(raw, id).page,
+  scalePage: (page, w, h) => scalePage(page, w, h),
+  buildRequest: (b64, hints) => buildRequest(b64, hints, { thinking: null }),
   thumbSvg: (nb, sense) => thumbSvg(nb, sense),
   importPage: (nb, page, noteId, at) => {
     const used = new Set([...nb.items.map(i => i.id), ...nb.links.map(l => l.id)]);
@@ -52,6 +56,7 @@ const firstDiff = (a, b, path = '') => {
 };
 
 configure(fx.config);
+configureReader(fx.reader);
 const failures = [];
 let ran = 0;
 for (const c of fx.cases) {

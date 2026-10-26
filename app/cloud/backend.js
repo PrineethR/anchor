@@ -19,7 +19,8 @@ import { cleanPage } from './pageclean.js';
 import { layout, renderHtml } from './layout.js';
 import { makeSense } from './meaning.js';
 import { blank, cleanItems, cleanLinks, COLORS, importPage, thumbSvg, threadOf, toPage } from './notebook.js';
-import { preparePhoto } from './photo.js';
+import { preparePhoto, turnPhoto } from './photo.js';
+import * as R from './reader.js';
 import { configure, senseHtml, toHtml, toMarkdown } from './render.js';
 
 const MAC_FRESH_MS = 180_000;                       // the Mac says it is awake every minute
@@ -62,6 +63,8 @@ export function createBackend({ db, user, onSignOut }) {
 
   // ---- live copies of the small documents ------------------------------------------------------------------------------
   const S = { pages: new Map(), nbs: new Map(), profile: null, edits: [], mac: null };
+  const inflight = new Set();            // pages this tab is reading with Gemini right now
+  const deviceId = (crypto.randomUUID?.() || String(Math.random())).slice(0, 8);
   const link = {}, unsent = new Set();   // per collection: is the server reachable, is something waiting to be sent; and which pages are not yet on the server
   const ready = {}, readyWaiters = {}, subs = new Set(), unsubs = [];
   const emit = kind => subs.forEach(s => s.kinds.includes(kind) && s.cb(kind));
@@ -152,7 +155,8 @@ export function createBackend({ db, user, onSignOut }) {
   function noteView(d) {
     const base = { id: d.id, title: d.title || 'Untitled page', created: d.created, how: d.how || '', turns: d.turns || 0, sure: d.sure !== false, crop: d.crop !== false,
       source: d.source || 'vision', confirmed: !!d.confirmed, edited: !!d.edited, engine_notes: d.engineNotes || [], changes: d.changes || [],
-      narration: null, can_narrate: false, status: d.status || 'ready', error: d.error || null, rev: d.rev || 0, unsent: unsent.has(d.id) };
+      narration: null, can_narrate: false, status: d.status || 'ready', error: d.error || null, rev: d.rev || 0, unsent: unsent.has(d.id),
+      read_cost: d.readUsd != null ? R.rupees(d.readUsd) : '', read_model: d.readModel || null, can_read_again: R.hasKey(), reading_here: inflight.has(d.id) };
     if (!d.pageJson) return { ...base, page: null, layout: null, sense: null, sense_html: '', clean_html: '' };
     const page = JSON.parse(d.pageJson);
     const sense = makeSense(page, cues());
@@ -171,7 +175,8 @@ export function createBackend({ db, user, onSignOut }) {
     if (!blob || !blob.size) throw new ApiError('That upload was empty. Choose the photo again.');
     const { full, thumb, w, h } = await preparePhoto(blob);
     const id = newId();
-    const doc = { id, title: '', created: nowIso(), status: 'queued', error: null, source: null, how: '', turns: 0, sure: true, crop: true, confirmed: false, edited: false,
+    const here = R.hasKey() && navigator.onLine !== false;   // a key on this device and a connection: this device reads it, the Mac is not needed
+    const doc = { id, title: '', created: nowIso(), status: here ? 'reading' : 'queued', readingBy: here ? deviceId : null, readStartedAt: here ? Date.now() : null, error: null, source: null, how: '', turns: 0, sure: true, crop: true, confirmed: false, edited: false,
       engineNotes: [], changes: [], pageJson: null, threads: 0, loose: 0, actions: 0, thumb: F.Bytes.fromUint8Array(thumb), photoRev: 1, rev: 0, learnedRev: 0,
       request: null, doneRequest: null, deleted: false, updatedAt: F.serverTimestamp() };
     const b = F.writeBatch(db);
@@ -179,6 +184,7 @@ export function createBackend({ db, user, onSignOut }) {
     b.set(P.file(id, 'flat'), { bytes: F.Bytes.fromUint8Array(full), type: 'image/jpeg', w, h, rev: 1 });
     S.pages.set(id, doc); unsent.add(id); emit('pages');
     await soft(b.commit());
+    if (here) readPage(id, full, w, h);   // in the background: the page shows "reading" and fills in
     return noteView(doc);
   }
 
@@ -206,8 +212,10 @@ export function createBackend({ db, user, onSignOut }) {
     return { sense, sense_html: senseHtml(sense, true), clean_html: renderHtml(lay), layout: lay };
   }
 
-  async function rereadNote(id, { rotate, crop }) {
+  async function rereadNote(id, { rotate, crop, again }) {
     const d = await pageDoc(id);
+    if (again) return readAgain(id, d);
+    if (rotate && d.source === 'gemini' && d.pageJson) return turnNote(id, d);
     const patch = { status: 'queued', error: null, request: { id: newId(), rotate: !!rotate, crop: crop === undefined || crop === null ? null : !!crop }, updatedAt: F.serverTimestamp() };
     S.pages.set(id, { ...d, ...patch }); emit('pages');
     await soft(F.updateDoc(P.page(id), patch));
@@ -417,6 +425,107 @@ export function createBackend({ db, user, onSignOut }) {
     return profileView();
   }
 
+  // ---- reading a page with Gemini, here -------------------------------------------------------------------------------------
+  const hints = () => { try { return JSON.parse(S.profile?.viewJson || '{}').hints || ''; } catch { return ''; } };   // how you write, as the Mac last worked it out
+  const monthOf = iso => String(iso || '').slice(0, 7);
+
+  /** Read a page's photo with Gemini and fill the page in. `jpeg` is the stored photo. Never throws: the page ends up ready, failed, or back in the Mac's queue. */
+  async function readPage(id, jpeg, w, h) {
+    if (inflight.has(id)) return;
+    inflight.add(id); emit('pages');
+    try {
+      const d0 = S.pages.get(id) || {};
+      const { page, rotation, notes, model, usage, usd } = await R.readPhoto(jpeg, w, h, { hints: hints(), pageId: id });
+      const sense = makeSense(page, cues());
+      const patch = { status: 'ready', error: null, source: 'gemini', how: 'gemini', turns: rotation / 90, sure: true, crop: false, confirmed: false, edited: false, changes: [],
+        engineNotes: notes.slice(0, 5), pageJson: JSON.stringify(page), title: d0.title || sense.title,
+        threads: sense.stats.threads, loose: sense.stats.loose, actions: sense.actions.length,
+        readModel: model, readUsd: usd, readTokens: usage ? { in: usage.promptTokenCount || 0, out: usage.candidatesTokenCount || 0, thinking: usage.thoughtsTokenCount || 0 } : null,
+        rev: (d0.rev || 0) + 1, learnedRev: (d0.rev || 0) + 1, readingBy: null, request: null, updatedAt: F.serverTimestamp() };
+      const b = F.writeBatch(db);
+      if (rotation) {   // the photo was sideways: turn the stored one so it matches the boxes
+        const t = await turnPhoto(jpeg, rotation / 90), rev = (d0.photoRev || 1) + 1;
+        b.set(P.file(id, 'flat'), { bytes: F.Bytes.fromUint8Array(t.full), type: 'image/jpeg', w: t.w, h: t.h, rev });
+        Object.assign(patch, { photoRev: rev, thumb: F.Bytes.fromUint8Array(t.thumb) });
+        dropUrls(`t:${id}:`); dropUrls(`f:${id}:`);
+      }
+      b.update(P.page(id), patch);
+      S.pages.set(id, { ...d0, ...patch });
+      await soft(b.commit());
+    } catch (e) {
+      const kind = e instanceof R.ReaderError ? e.kind : 'bad';
+      const toMac = kind === 'offline' || kind === 'nokey';   // not a fault in the page: the Mac, or a later try here, can still read it
+      const patch = toMac ? { status: 'queued', error: null, readingBy: null } : { status: 'failed', error: e.message || 'Gemini could not read this page.', readingBy: null };
+      if (!(e instanceof R.ReaderError)) console.warn('reading', e);
+      S.pages.set(id, { ...(S.pages.get(id) || {}), ...patch, updatedAt: null });
+      await soft(F.updateDoc(P.page(id), { ...patch, updatedAt: F.serverTimestamp() })).catch(() => {});
+    } finally { inflight.delete(id); emit('pages'); }
+  }
+
+  /** Take a page for this device to read, unless another device or the Mac already has: a transaction, so only one wins. */
+  async function claim(id, status, startedAt) {
+    try {
+      return await F.runTransaction(db, async tx => {
+        const s = await tx.get(P.page(id)), d = s.data();
+        if (!s.exists() || d.deleted || d.status !== status || (status === 'reading' && (d.readStartedAt || null) !== (startedAt || null))) return false;
+        tx.update(P.page(id), { status: 'reading', readingBy: deviceId, readStartedAt: Date.now(), updatedAt: F.serverTimestamp() });
+        return true;
+      });
+    } catch { return false; }
+  }
+
+  /** Pages stuck "reading" (the tab that started them closed), and pages the Mac has not picked up for three minutes: read them here, if there is a key. */
+  async function resumeStale() {
+    if (!R.hasKey() || navigator.onLine === false) return;
+    await whenReady('pages');
+    for (const d of live(S.pages)) {
+      if (inflight.has(d.id) || unsent.has(d.id)) continue;
+      const age = Date.now() - (d.status === 'reading' ? (d.readStartedAt || 0) : new Date(d.created).getTime());
+      const stale = d.status === 'reading' && age > 150_000;
+      const unattended = d.status === 'queued' && !macState().online && age > 180_000;
+      if ((stale || unattended) && await claim(d.id, d.status, d.readStartedAt)) {
+        const f = await fileDoc(P.file(d.id, 'flat'), d.photoRev || 0).catch(() => null);
+        if (f) readPage(d.id, f.bytes.toUint8Array(), f.w, f.h); else await F.updateDoc(P.page(d.id), { status: 'failed', error: 'The photo went missing. Add it again.' }).catch(() => {});
+      }
+    }
+  }
+  window.addEventListener('online', () => resumeStale());
+  const resumer = setInterval(() => resumeStale(), 60_000);
+  setTimeout(() => resumeStale(), 3000);
+
+  /** What reading has cost this month, from what each page recorded. */
+  const usageThisMonth = () => {
+    const mine = live(S.pages).filter(d => d.readUsd != null && monthOf(d.created) === monthOf(nowIso()));
+    return { pages: mine.length, usd: mine.reduce((t, d) => t + d.readUsd, 0) };
+  };
+
+  /** Rotate (turn a Gemini-read page a quarter turn, no network) or Read again (ask Gemini once more). */
+  async function readAgain(id, d) {
+    if (!R.hasKey()) throw new ApiError('Add a Gemini key in Settings to read pages again here.');
+    const f = await fileDoc(P.file(id, 'flat'), d.photoRev || 0);
+    if (!f) throw notFound();
+    const patch = { status: 'reading', error: null, readingBy: deviceId, readStartedAt: Date.now(), updatedAt: F.serverTimestamp() };
+    S.pages.set(id, { ...d, ...patch }); emit('pages');
+    await soft(F.updateDoc(P.page(id), patch));
+    readPage(id, f.bytes.toUint8Array(), f.w, f.h);
+    return noteView({ ...d, ...patch });
+  }
+  async function turnNote(id, d) {
+    const f = await fileDoc(P.file(id, 'flat'), d.photoRev || 0);
+    if (!f || !d.pageJson) throw notFound();
+    const t = await turnPhoto(f.bytes.toUint8Array(), 1), page = R.turnPixels(JSON.parse(d.pageJson), 1), rev = (d.photoRev || 1) + 1;
+    const sense = makeSense(page, cues());
+    const patch = { pageJson: JSON.stringify(page), photoRev: rev, thumb: F.Bytes.fromUint8Array(t.thumb), turns: ((d.turns || 0) + 1) % 4,
+      threads: sense.stats.threads, loose: sense.stats.loose, actions: sense.actions.length, rev: (d.rev || 0) + 1, updatedAt: F.serverTimestamp() };
+    dropUrls(`t:${id}:`); dropUrls(`f:${id}:`);
+    const b = F.writeBatch(db);
+    b.set(P.file(id, 'flat'), { bytes: F.Bytes.fromUint8Array(t.full), type: 'image/jpeg', w: t.w, h: t.h, rev });
+    b.update(P.page(id), patch);
+    S.pages.set(id, { ...d, ...patch }); emit('pages');
+    await soft(b.commit());
+    return noteView({ ...d, ...patch });
+  }
+
   // ---- the router ------------------------------------------------------------------------------------------------------
   async function api(path, opts = {}) {
     const method = (opts.method || 'GET').toUpperCase();
@@ -426,7 +535,10 @@ export function createBackend({ db, user, onSignOut }) {
     try {
       if (r[0] === 'status' && method === 'GET') {
         await whenReady('mac'); await whenReady('pages');
-        return { gemini: false, vision: false, labeled: 0, notebooks: true, cloud: { email: user.email, mac: macState(), waiting: live(S.pages).filter(d => d.status === 'queued').length } };
+        const { preset } = R.settings();
+        return { gemini: R.hasKey(), vision: false, labeled: 0, notebooks: true,
+          reader: { here: R.hasKey(), preset: R.PRESETS[preset].label, month: usageThisMonth() },
+          cloud: { email: user.email, mac: macState(), waiting: live(S.pages).filter(d => d.status === 'queued').length } };
       }
       if (r[0] === 'profile') {
         await whenReady('profile'); await whenReady('edits');
@@ -484,8 +596,9 @@ export function createBackend({ db, user, onSignOut }) {
   return {
     api: wrapped, download, photoAttr, assetUrl, hydrate: () => hydrate(document),
     subscribe(kinds, cb) { const s = { kinds, cb }; subs.add(s); return () => subs.delete(s); },
-    account: { email: user.email, signOut: async () => { unsubs.forEach(u => u()); clearInterval(tick); watcher.disconnect(); await onSignOut(); } },
+    account: { email: user.email, signOut: async () => { unsubs.forEach(u => u()); clearInterval(tick); clearInterval(resumer); watcher.disconnect(); await onSignOut(); } },
     macState, net: netState,
+    reader: { settings: R.settings, save: R.saveSettings, forget: R.forgetKey, check: R.checkKey, presets: R.PRESETS, usage: usageThisMonth, rupees: R.rupees, resume: resumeStale },
     // for tests and the console
     _state: S, _db: db, _paths: P, _nbBody: nbBody,
   };

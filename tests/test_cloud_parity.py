@@ -5,6 +5,7 @@ This computes a few hundred cases with the Python and has node run the port on t
 Skipped when node is not installed.
 """
 
+import base64
 import json
 import random
 import secrets
@@ -16,7 +17,8 @@ from pathlib import Path
 from unittest import mock
 
 from harness.schema import parse_page, validate
-from sense import app, canvas, meaning, notebooks, share, theme
+from baselines import gemini
+from sense import app, canvas, engine, meaning, notebooks, share, theme
 from sense.notebooks import clean_items, clean_links, thumb_svg, to_page
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -149,6 +151,23 @@ def build_cases():
             lay = canvas.layout(page, t, norm)
             add(f"free layout {i} {norm}", "layout", [page, t, norm], {"ok": lay})
             add(f"free render {i} {norm}", "renderHtml", [page, t, norm], {"ok": canvas.render_html(lay)})
+    # Gemini's answer as a page, scaled to the photo, and the request that asks for it
+    for i in range(60):
+        raw = random_gemini_answer(r)
+        page, _ = gemini.to_page(json.loads(json.dumps(raw, default=str)), "p")
+        kept = as_the_site_keeps_it(page)
+        add(f"gemini page {i}", "geminiToPage", [json.loads(json.dumps(raw, default=str)), "p"], {"ok": kept})
+        w, h = r.choice([(2400, 1800), (1800, 2400), (1333, 977), (640, 480.5 and 481), (2000, 1000)])
+        scaled = json.loads(json.dumps(kept))
+        engine.scale_page(scaled, w, h)
+        add(f"scale {i}", "scalePage", [kept, w, h], {"ok": scaled})
+    with tempfile.TemporaryDirectory() as td:
+        for i, hint in enumerate(["", "About this writer:\n- x", None]):
+            img = Path(td) / f"{i}.jpg"
+            img.write_bytes(bytes(range(256)) * (i + 1))
+            body = gemini.build_body(img, gemini.PROMPT + ("\n" + hint if hint else ""))
+            add(f"request {i}", "buildRequest", [base64.b64encode(img.read_bytes()).decode(), hint or ""], {"ok": body})
+
     # the empty page and the one with a single word
     for name, page in {"empty": {"page_size": [1000, 700], "elements": [], "links": []},
                        "one": {"page_size": [100, 100], "elements": [{"id": "a", "type": "text", "bbox": [1, 1, 5, 5], "text": "  hello  "}], "links": []}}.items():
@@ -238,6 +257,51 @@ def config():
     return {"threadMarks": marks, "signOff": theme.sign_off(), "themeCss": "/*theme*/", "shareCss": "/*share*/", "canvasCss": "/*canvas*/"}
 
 
+def reader_config():
+    return {"prompt": gemini.PROMPT, "schema": gemini.RESPONSE_SCHEMA, "grid": gemini.GRID}
+
+
+def random_gemini_answer(r: random.Random) -> dict:
+    """The kind of answer Gemini gives, and the kinds it should not: reversed corners, out-of-range and fractional numbers, repeated ids."""
+    def coord():
+        k = r.random()
+        return r.randint(0, 1000) if k < 0.6 else r.random() * 1000 if k < 0.8 else r.choice([-30, 1200, 0, 1000, 5.5, -0.5, "250"])
+    els = []
+    for i in range(r.randint(0, 30)):
+        kind = r.choices(["text", "shape", "doodle"], [70, 15, 15])[0]
+        e = {"id": r.choice([f"t{i}", f"t{i}", "dup", ""]) if r.random() < 0.9 else None, "type": kind, "box_2d": [coord(), coord(), coord(), coord()]}
+        if r.random() < 0.05:
+            e["box_2d"] = [1, 2, 3]
+        if kind == "text":
+            e.update(text=r.choice(WORDS + ["   ", "", "  padded  "]), underline=r.random() < 0.3, caps=r.random() < 0.2)
+        if kind == "shape":
+            e["contains"] = r.sample([x["id"] for x in els if x.get("id")], min(len([x for x in els if x.get("id")]), r.randint(0, 3))) + (["zz"] if r.random() < 0.2 else [])
+        els.append(e)
+    ids = [e["id"] or f"e{i + 1}" for i, e in enumerate(els)] or ["x"]
+    links = []
+    for k in range(r.randint(0, 20)):
+        l = {"id": r.choice([f"l{k}", "", None]), "kind": r.choice(["flow", "hook", "connector"]), "from": r.choice(ids + ["ghost"]), "to": r.choice(ids + ["ghost"])}
+        if r.random() < 0.3:
+            l.update(from_alt=r.choice(ids), to_alt=r.choice(ids))
+        if r.random() < 0.4:
+            l.update(label=r.choice(WORDS + ["  "]), caps=r.random() < 0.3, underline=r.random() < 0.3)
+        if r.random() < 0.5:
+            l["confidence"] = round(r.random(), 2)
+        links.append(l)
+    return {"elements": els, "links": links}
+
+
+def as_the_site_keeps_it(page: dict) -> dict:
+    """The site keeps arrow ends as plain ids and drops confidence: the same page otherwise."""
+    page = json.loads(json.dumps(page))
+    for l in page["links"]:
+        for end in ("from", "to"):
+            if isinstance(l[end], list):
+                l[end] = l[end][0]["id"]
+        l.pop("confidence", None)
+    return page
+
+
 @unittest.skipUnless(shutil.which("node"), "needs node")
 class ParityTests(unittest.TestCase):
     def test_the_browser_port_agrees_with_python(self):
@@ -246,7 +310,7 @@ class ParityTests(unittest.TestCase):
             cases = build_cases()
         self.assertGreater(len(cases), 500)
         with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False) as f:
-            json.dump({"config": config(), "cases": cases}, f)
+            json.dump({"config": config(), "reader": reader_config(), "cases": cases}, f)
         try:
             out = subprocess.run(["node", str(ROOT / "tests/js/parity.mjs"), f.name], capture_output=True, text=True, cwd=ROOT)
         finally:
@@ -266,7 +330,7 @@ class ParityTests(unittest.TestCase):
         want = share.to_html(note, None)
         cfg = {**config(), "themeCss": css, "shareCss": share.CSS, "canvasCss": canvas.CSS}
         with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False) as f:
-            json.dump({"config": cfg, "cases": [{"name": "real css", "op": "toHtml", "args": [note, None], "expect": {"ok": want}}]}, f)
+            json.dump({"config": cfg, "reader": reader_config(), "cases": [{"name": "real css", "op": "toHtml", "args": [note, None], "expect": {"ok": want}}]}, f)
         try:
             out = subprocess.run(["node", str(ROOT / "tests/js/parity.mjs"), f.name], capture_output=True, text=True, cwd=ROOT)
         finally:

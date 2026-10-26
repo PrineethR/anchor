@@ -169,6 +169,11 @@ def to_pixels(page: dict, flat: Path) -> dict:
     """Gemini's boxes are on a 1000x1000 grid whatever the image's shape; the app needs the
     page's real aspect, so rescale to the pixels of the image that was read."""
     h, w = cv2.imread(str(flat)).shape[:2]
+    return scale_page(page, w, h)
+
+
+def scale_page(page: dict, w: int, h: int) -> dict:
+    """`page` rescaled in place from its own page_size to a w x h image. The website does the same sum in JavaScript."""
     sx, sy = w / page["page_size"][0], h / page["page_size"][1]
     for e in page["elements"]:
         x, y, bw, bh = e["bbox"]

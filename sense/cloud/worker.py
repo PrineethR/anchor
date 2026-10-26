@@ -396,7 +396,8 @@ class Worker:
 
     def publish_profile(self) -> None:
         if self.profile_dirty:
-            self.fs.set(self.p("profile", "default"), {"viewJson": json.dumps(self.store.profile_view()), "updatedAt": datetime.now(timezone.utc)})
+            view = {**self.store.profile_view(), "hints": self.store.profile.hints()}   # `hints` is what the website tells Gemini about how you write
+            self.fs.set(self.p("profile", "default"), {"viewJson": json.dumps(view), "updatedAt": datetime.now(timezone.utc)})
             self.profile_dirty = False
 
     # --- the loop ------------------------------------------------------------------------------------------------------
