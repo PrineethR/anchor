@@ -38,3 +38,4 @@ sense/cloud/node_modules/
 firestore-debug.log
 ui-debug.log
 firebase-debug.log
+tests/e2e/node_modules/

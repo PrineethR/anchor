@@ -34,13 +34,18 @@ def hexbgr(h: str) -> tuple[int, int, int]:
     return int(h[5:7], 16), int(h[3:5], 16), int(h[1:3], 16)
 
 
-def draw_icon(size: int) -> bytes:
-    """The app's mark for a phone's home screen: a tiny concept map (three ideas, two arrows) in the design system's colours."""
-    k = size / 512
-    s = lambda v: int(round(v * k))
+def draw_icon(size: int, inset: float = 1.0) -> bytes:
+    """The app's mark for a phone's home screen: a tiny concept map (three ideas, two arrows) in the design system's colours.
+
+    `inset` shrinks the drawing toward the middle and leaves the paper to the edges: a maskable icon may be cropped to a circle
+    by the phone, so everything that matters has to sit in its middle 80 %."""
+    k = size / 512 * inset
+    mid = size / 2
+    s = lambda v: max(1, int(round(v * k)))
+    at = lambda x, y: (int(round(mid + (x - 256) * k)), int(round(mid + (y - 256) * k)))
     paper, ink, sky, sun, mint, blush = (hexbgr(c) for c in ("#FBF7F0", "#1D1C1A", "#3DB1F5", "#FFC91C", "#20A95C", "#F7A6CB"))
     img = np.full((size, size, 3), paper, np.uint8)
-    a, b, c = (s(150), s(160)), (s(370), s(200)), (s(250), s(360))
+    a, b, c = at(150, 160), at(370, 200), at(250, 360)
     for p, q in ((a, b), (b, c)):
         d = np.array(q, float) - np.array(p, float)
         d /= np.hypot(*d)
@@ -49,8 +54,26 @@ def draw_icon(size: int) -> bytes:
     for centre, colour, r in ((a, sky, 52), (b, blush, 52), (c, mint, 52)):
         cv2.circle(img, centre, s(r), colour, -1, cv2.LINE_AA)
         cv2.circle(img, centre, s(r), ink, s(8), cv2.LINE_AA)
-    cv2.line(img, (s(120), s(450)), (s(392), s(450)), sun, s(22), cv2.LINE_AA)   # what you underlined
+    cv2.line(img, at(120, 450), at(392, 450), sun, s(22), cv2.LINE_AA)   # what you underlined
     return cv2.imencode(".png", img)[1].tobytes()
+
+
+def manifest() -> dict:
+    """What a phone or desktop needs to install the site as an app. Every address is relative, so it works from any folder."""
+    icon = lambda f, size, purpose="any": {"src": f"icons/{f}", "sizes": f"{size}x{size}", "type": "image/png", "purpose": purpose}
+    return {
+        "id": "./", "name": "Make sense", "short_name": "Make sense", "lang": "en", "dir": "ltr",
+        "description": "Turn photos of your handwritten notebook pages into notes you can read, and think on an endless canvas. Works offline.",
+        "start_url": "./", "scope": "./", "display": "standalone", "display_override": ["standalone", "minimal-ui"], "orientation": "any",
+        "background_color": "#FBF7F0", "theme_color": "#FBF7F0", "categories": ["productivity", "education"],
+        "icons": [icon("icon-192.png", 192), icon("icon-512.png", 512), icon("icon-maskable-512.png", 512, "maskable")],
+        "shortcuts": [
+            {"name": "Notebooks", "short_name": "Notebooks", "description": "Open your endless pages", "url": "./#/notebooks", "icons": [icon("icon-192.png", 192)]},
+            {"name": "Your pages", "short_name": "Pages", "description": "Add a photo or open a page", "url": "./#/", "icons": [icon("icon-192.png", 192)]}],
+        # Share a photo to the app from the gallery or camera (Android and desktop Chrome): sw.js keeps it, the app asks before adding it.
+        "share_target": {"action": "share-target", "method": "POST", "enctype": "multipart/form-data",
+                         "params": {"files": [{"name": "photos", "accept": ["image/*"]}]}},
+    }
 
 
 def bundle_firebase(dest: Path) -> None:
@@ -86,12 +109,10 @@ def build(out: Path, emulator: bool = False, config: Path | None = None) -> list
             write(out / "cloud" / js.name, js.read_bytes())
     bundle_firebase(out / "cloud" / "lib" / "firebase.js")
 
-    for name, px in (("apple-touch-icon.png", 180), ("icon-192.png", 192), ("icon-512.png", 512)):
-        write(out / "icons" / name, draw_icon(px))
-    write(out / "manifest.webmanifest", json.dumps({
-        "name": "Make sense", "short_name": "Make sense", "start_url": "./", "scope": "./", "display": "standalone",
-        "background_color": "#FBF7F0", "theme_color": "#FBF7F0",
-        "icons": [{"src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png"}, {"src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png"}]}))
+    for name, px, inset in (("apple-touch-icon.png", 180, 1.0), ("icon-192.png", 192, 1.0), ("icon-512.png", 512, 1.0),
+                            ("icon-maskable-512.png", 512, 0.74), ("favicon-32.png", 32, 1.0)):
+        write(out / "icons" / name, draw_icon(px, inset))
+    write(out / "manifest.webmanifest", json.dumps(manifest(), indent=1))
     write(out / "config.json", json.dumps({"firebase": firebase, "emulator": EMULATOR if emulator else None}))
     write(out / "theme.json", json.dumps({"threadMarks": [m["svg"] for m in theme._prerendered()["thread_shapes"]], "signOff": theme.sign_off()}))
     write(out / "export-css.json", json.dumps({"themeCss": theme.stylesheet(embed_fonts=True), "shareCss": share.CSS, "canvasCss": canvas.CSS}))

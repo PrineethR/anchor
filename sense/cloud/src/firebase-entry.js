@@ -5,6 +5,6 @@ export {
   onAuthStateChanged, signOut, connectAuthEmulator,
 } from 'firebase/auth';
 export {
-  initializeFirestore, persistentLocalCache, persistentMultipleTabManager, CACHE_SIZE_UNLIMITED, connectFirestoreEmulator,
+  initializeFirestore, persistentLocalCache, persistentMultipleTabManager, memoryLocalCache, CACHE_SIZE_UNLIMITED, connectFirestoreEmulator,
   doc, collection, getDoc, getDocs, getDocFromCache, setDoc, updateDoc, deleteDoc, onSnapshot, writeBatch, runTransaction, Bytes, serverTimestamp, disableNetwork, enableNetwork,
 } from 'firebase/firestore';

@@ -62,13 +62,23 @@ export function createBackend({ db, user, onSignOut }) {
 
   // ---- live copies of the small documents ------------------------------------------------------------------------------
   const S = { pages: new Map(), nbs: new Map(), profile: null, edits: [], mac: null };
+  const link = {}, unsent = new Set();   // per collection: is the server reachable, is something waiting to be sent; and which pages are not yet on the server
   const ready = {}, readyWaiters = {}, subs = new Set(), unsubs = [];
   const emit = kind => subs.forEach(s => s.kinds.includes(kind) && s.cb(kind));
   const whenReady = name => ready[name] ? Promise.resolve() : Promise.race([new Promise(r => { (readyWaiters[name] ||= []).push(r); }), new Promise(r => setTimeout(r, 6000))]);
   const markReady = name => { ready[name] = true; (readyWaiters[name] || []).forEach(r => r()); };
-  const listenCollection = (name, ref, map) => unsubs.push(F.onSnapshot(ref, snap => {
-    snap.docChanges().forEach(ch => (ch.type === 'removed' ? map.delete(ch.doc.id) : map.set(ch.doc.id, ch.doc.data())));
-    markReady(name); emit(name);
+  const netState = () => ({ online: navigator.onLine !== false, connected: !link.pages?.fromCache, pending: Object.values(link).some(l => l.pending) });
+  let lastNet = '';
+  const emitNet = () => { const j = JSON.stringify(netState()); if (j !== lastNet) { lastNet = j; emit('net'); } };
+  window.addEventListener('online', emitNet); window.addEventListener('offline', emitNet);
+  const listenCollection = (name, ref, map) => unsubs.push(F.onSnapshot(ref, { includeMetadataChanges: true }, snap => {
+    snap.docChanges({ includeMetadataChanges: true }).forEach(ch => {
+      if (ch.type === 'removed') { map.delete(ch.doc.id); unsent.delete(ch.doc.id); return; }
+      map.set(ch.doc.id, ch.doc.data());
+      if (name === 'pages') (ch.doc.metadata.hasPendingWrites ? unsent.add(ch.doc.id) : unsent.delete(ch.doc.id));
+    });
+    link[name] = { fromCache: snap.metadata.fromCache, pending: snap.metadata.hasPendingWrites };
+    markReady(name); emit(name); emitNet();
   }, err => { console.warn(name, err); markReady(name); emit('error'); }));
   listenCollection('pages', P.pages(), S.pages);
   listenCollection('notebooks', P.nbs(), S.nbs);
@@ -142,7 +152,7 @@ export function createBackend({ db, user, onSignOut }) {
   function noteView(d) {
     const base = { id: d.id, title: d.title || 'Untitled page', created: d.created, how: d.how || '', turns: d.turns || 0, sure: d.sure !== false, crop: d.crop !== false,
       source: d.source || 'vision', confirmed: !!d.confirmed, edited: !!d.edited, engine_notes: d.engineNotes || [], changes: d.changes || [],
-      narration: null, can_narrate: false, status: d.status || 'ready', error: d.error || null, rev: d.rev || 0 };
+      narration: null, can_narrate: false, status: d.status || 'ready', error: d.error || null, rev: d.rev || 0, unsent: unsent.has(d.id) };
     if (!d.pageJson) return { ...base, page: null, layout: null, sense: null, sense_html: '', clean_html: '' };
     const page = JSON.parse(d.pageJson);
     const sense = makeSense(page, cues());
@@ -154,7 +164,7 @@ export function createBackend({ db, user, onSignOut }) {
   async function listNotes() {
     await whenReady('pages');
     return live(S.pages).sort((a, b) => (a.id < b.id ? 1 : -1)).map(d => ({ id: d.id, title: d.title || 'Untitled page', created: d.created, source: d.source || 'vision',
-      confirmed: !!d.confirmed, threads: d.threads || 0, loose: d.loose || 0, actions: d.actions || 0, status: d.status || 'ready', error: d.error || null }));
+      confirmed: !!d.confirmed, threads: d.threads || 0, loose: d.loose || 0, actions: d.actions || 0, status: d.status || 'ready', error: d.error || null, unsent: unsent.has(d.id) }));
   }
 
   async function createNote(blob) {
@@ -167,7 +177,7 @@ export function createBackend({ db, user, onSignOut }) {
     const b = F.writeBatch(db);
     b.set(P.page(id), doc);
     b.set(P.file(id, 'flat'), { bytes: F.Bytes.fromUint8Array(full), type: 'image/jpeg', w, h, rev: 1 });
-    S.pages.set(id, doc); emit('pages');
+    S.pages.set(id, doc); unsent.add(id); emit('pages');
     await soft(b.commit());
     return noteView(doc);
   }
@@ -475,7 +485,7 @@ export function createBackend({ db, user, onSignOut }) {
     api: wrapped, download, photoAttr, assetUrl, hydrate: () => hydrate(document),
     subscribe(kinds, cb) { const s = { kinds, cb }; subs.add(s); return () => subs.delete(s); },
     account: { email: user.email, signOut: async () => { unsubs.forEach(u => u()); clearInterval(tick); watcher.disconnect(); await onSignOut(); } },
-    macState,
+    macState, net: netState,
     // for tests and the console
     _state: S, _db: db, _paths: P, _nbBody: nbBody,
   };

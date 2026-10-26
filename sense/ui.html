@@ -41,6 +41,16 @@ body.on-note .phone-add { display: none; }
 .macdot.on { background: var(--mint); box-shadow: 0 0 0 3px var(--mint-soft); }
 .rail-foot { margin-top: auto; padding: 0 var(--s-3); color: var(--fg-3); font: var(--w-regular) var(--t-sm)/1.4 var(--font-ui); }
 
+.netpill { position: fixed; top: calc(var(--s-3) + env(safe-area-inset-top)); left: 50%; translate: -50% 0; z-index: var(--z-toast); width: max-content;
+  max-width: min(34rem, calc(100% - 2 * var(--gutter))); display: flex; align-items: center; padding: .55rem var(--s-4); border-radius: var(--radius-pill);
+  background: var(--bg-surface); border: var(--stroke) solid var(--line-strong); box-shadow: var(--shadow-1); color: var(--fg-1); font: var(--w-medium) var(--t-sm)/1.3 var(--font-ui); }
+.netpill .macdot { flex: none; background: var(--tangerine); }
+.prof-account .nw-btn { margin-top: var(--s-3); }
+.shared { display: grid; gap: var(--s-3); margin: var(--s-5) 0; max-width: 34rem; }
+.shared img { display: block; width: 100%; max-height: 60vh; object-fit: contain; border-radius: var(--radius-xl); background: var(--bg-sunken); }
+.shared-actions { display: grid; gap: var(--s-2); max-width: 22rem; }
+body { overscroll-behavior-y: none; }
+
 /* ---- Text roles --------------------------------------------------------------------------------------- */
 .lead { font: var(--w-regular) var(--t-lead)/var(--lh-body) var(--font-body); color: var(--fg-1); max-width: 34rem; margin: 0; }
 .hint { font: var(--w-regular) var(--t-sm)/1.45 var(--font-ui); color: var(--fg-3); margin: var(--s-2) 0 0; max-width: 34rem; }
@@ -189,6 +199,7 @@ details.fixes s { color: var(--fg-3); }
 <nav class="phone-nav nw-tabs nw-tabs--labels" role="tablist" aria-label="Pages" style="--nw-c:var(--sky);--nw-oc:var(--ink-900)"></nav>
 <button class="phone-add nw-ib nw-ib--solid nw-ib--lg nw-ib--float" id="phoneAdd" type="button" aria-label="Add a page" title="Add a page"></button>
 <input type="file" id="picker" accept="image/*" hidden>
+<input type="file" id="camera" accept="image/*" capture="environment" hidden>
 <div id="layer"></div>
 
 <!--__CLOUD__-->
@@ -318,6 +329,37 @@ function paintFoot() {
   const m = window.MS_BACKEND.macState();
   foot.innerHTML = `<span class="macdot${m.online ? ' on' : ''}"></span>${m.online ? 'Your Mac is on' : 'Your Mac is off'}<br>${esc(window.MS_BACKEND.account.email)}`;
 }
+/** A small pill at the top while the device is offline or still sending; a toast when it catches up. */
+function watchNet() {
+  const B = window.MS_BACKEND;
+  const pill = document.createElement('div');
+  pill.className = 'netpill'; pill.setAttribute('role', 'status'); pill.hidden = true;
+  document.body.appendChild(pill);
+  let timer, wasOffline = false;
+  const paint = () => {
+    const n = B.net(), offline = !n.online || !n.connected;
+    if (offline) { wasOffline = true; pill.hidden = false; pill.innerHTML = `<span class="macdot"></span>Offline. Changes send when you are back.`; }
+    else if (n.pending) { pill.hidden = false; pill.innerHTML = 'Sending changes…'; }
+    else { pill.hidden = true; if (wasOffline) { wasOffline = false; toast('Back online. Everything is sent.', { icon: 'check' }); } }
+  };
+  B.subscribe(['net'], () => { clearTimeout(timer); const n = B.net(); timer = setTimeout(paint, !n.online || !n.connected ? 2500 : 250); });   // a blip is not worth showing
+}
+/** A newer version of the app has been downloaded: say so, and swap only when asked. */
+function watchUpdate() {
+  const P = window.MS_PWA;
+  if (!P) return;
+  const show = () => {
+    if (!P.state.updateReady || $('#updateToast')) return;
+    const t = document.createElement('div');
+    t.id = 'updateToast'; t.className = 'nw-toast savebar'; t.setAttribute('role', 'status');
+    t.innerHTML = `<span class="nw-toast__msg">A new version is ready.</span><button class="nw-toast__act quiet" data-later type="button">Later</button><button class="nw-toast__act" data-now type="button">Reload</button>`;
+    document.body.appendChild(t);
+    $('[data-later]', t).onclick = () => t.remove();
+    $('[data-now]', t).onclick = () => P.applyUpdate();
+  };
+  window.addEventListener('ms:pwa', show);
+  show();
+}
 function paintBackdrop(seed, { variant = 'shapes', animate = false, count = 4 } = {}) {
   $('#backdrop').innerHTML = ds.backdrop({ variant, seed, count, marks: 6, animate });
 }
@@ -325,7 +367,7 @@ $('#railAdd').onclick = e => { ds.burstAt(e.currentTarget, e); $('#picker').clic
 let addAction = () => $('#picker').click();
 $('#phoneAdd').onclick = () => addAction();
 $('#railNew').onclick = () => newNotebook();
-$('#picker').onchange = e => { const f = e.target.files[0]; e.target.value = ''; if (f) upload(f); };
+$('#picker').onchange = $('#camera').onchange = e => { const f = e.target.files[0]; e.target.value = ''; if (f) upload(f); };
 document.addEventListener('click', e => { const b = e.target.closest('.nw-btn--primary:not(#railAdd)'); if (b && !b.closest('.nw-sheet')) ds.burstAt(b, e); });
 
 let currentHash = location.hash || '#/';
@@ -337,6 +379,7 @@ async function route() {
   const h = currentHash = location.hash || '#/';
   if (HAS_NB && h.startsWith('#/nb/')) return canvasPage(h.slice(5));
   if (HAS_NB && h.startsWith('#/notebooks')) return notebooksPage();
+  if (window.MS_PWA && h.startsWith('#/shared')) return sharedPage();
   if (h.startsWith('#/note/')) return notePage(h.slice(7));
   if (h.startsWith('#/profile')) return profilePage();
   return homePage();
@@ -374,7 +417,7 @@ function pageRows(notes) {
     return `<li><a class="nw-card nw-card--raised nw-card--interactive page-row" href="#/note/${n.id}">
       <img ${photoAttr(n.id, '', false)} alt="" loading="lazy">
       <span><span class="t">${esc(ready ? n.title : n.status === 'failed' ? 'Couldn’t read this page' : 'A page waiting to be read')}</span><span class="nw-label">${esc(meta)}</span></span>
-      ${!ready ? (n.status === 'failed' ? badge('blush', 'triangle-alert', 'Couldn’t read') : badge('tangerine', 'info', 'Waiting for your Mac')) : n.confirmed ? badge('mint', 'check', 'Checked') : ''}
+      ${!ready ? (n.status === 'failed' ? badge('blush', 'triangle-alert', 'Couldn’t read') : n.unsent ? badge('sky', 'info', 'Not sent yet') : badge('tangerine', 'info', 'Waiting for your Mac')) : n.confirmed ? badge('mint', 'check', 'Checked') : ''}
     </a></li>`;
   }).join('')}</ul>`;
 }
@@ -388,8 +431,11 @@ async function homePage() {
       <div>
         <div class="nw-card nw-card--dashed drop" id="drop">
           <div class="drop-art">${ds.illustration('empty-notes', { size: 200, still: notes.length > 0 })}</div>
-          <button class="nw-btn nw-btn--primary nw-btn--lg" id="pick" type="button">${ico('image', { size: 22, cls: 'nw-btn__icon' })}<span>Choose a photo</span>${ico('arrow-right', { size: 22, sw: 1.5, cls: 'nw-btn__arrow' })}</button>
-          <p class="hint" style="margin:0">or drop one here</p>
+          ${matchMedia('(pointer: coarse)').matches
+            ? `<button class="nw-btn nw-btn--primary nw-btn--lg" id="shoot" type="button">${ico('camera', { size: 22, cls: 'nw-btn__icon' })}<span>Take a photo</span>${ico('arrow-right', { size: 22, sw: 1.5, cls: 'nw-btn__arrow' })}</button>
+               <button class="nw-btn nw-btn--secondary" id="pick" type="button">${ico('image', { size: 20, cls: 'nw-btn__icon' })}<span>Choose from your library</span></button>`
+            : `<button class="nw-btn nw-btn--primary nw-btn--lg" id="pick" type="button">${ico('image', { size: 22, cls: 'nw-btn__icon' })}<span>Choose a photo</span>${ico('arrow-right', { size: 22, sw: 1.5, cls: 'nw-btn__arrow' })}</button>
+               <p class="hint" style="margin:0">or drop one here</p>`}
         </div>
         <p class="hint" id="readerHint">${esc(readerLine(st))}</p>
       </div>
@@ -400,6 +446,7 @@ async function homePage() {
     </div>`;
   const drop = $('#drop');
   $('#pick').onclick = () => $('#picker').click();
+  const shoot = $('#shoot'); if (shoot) shoot.onclick = () => $('#camera').click();
   ['dragenter', 'dragover'].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.add('over', 'nw-card--hatch'); }));
   ['dragleave', 'drop'].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.remove('over', 'nw-card--hatch'); }));
   drop.addEventListener('drop', e => e.dataTransfer.files[0] && upload(e.dataTransfer.files[0]));
@@ -416,6 +463,29 @@ async function upload(f) {
   const note = await guarded(cloud ? 'Saving your photo…' : 'Reading your handwriting…', cloud ? 'Shrinking it to fit, then sending it.' : 'Finding the page first, then the words.', () =>
     api('/notes', { method: 'POST', headers: { 'Content-Type': f.type || 'application/octet-stream' }, body: f }));
   if (note) location.hash = '#/note/' + note.id;
+}
+
+/* ---------- a photo shared to the app from a gallery or camera ---------- */
+async function sharedPage() {
+  S.dirty = false; S.note = null; paintShell('notes'); paintBackdrop(3);
+  const items = await window.MS_PWA.sharedPhotos();
+  if (!items.length) { toast('Nothing was shared.', { icon: 'info' }); location.hash = '#/'; return; }
+  const urls = items.map(i => URL.createObjectURL(i.blob));
+  app.innerHTML = `
+    <h1 class="page-h">Add ${items.length === 1 ? 'this' : 'these'} <em>${items.length === 1 ? 'photo' : 'photos'}?</em></h1>
+    <p class="lead">Shared to Make sense from another app. It only goes in your pages if you say so.</p>
+    <div class="shared">${urls.map(u => `<img src="${u}" alt="A shared photo">`).join('')}</div>
+    <div class="shared-actions">
+      <button class="nw-btn nw-btn--primary nw-btn--lg" id="addShared" type="button"><span>Add to your pages</span></button>
+      <button class="nw-btn nw-btn--soft" id="dropShared" type="button"><span>Not now</span></button></div>`;
+  const done = async () => { urls.forEach(URL.revokeObjectURL); await window.MS_PWA.clearShared(); };
+  $('#dropShared').onclick = async () => { await done(); location.hash = '#/'; };
+  $('#addShared').onclick = async () => {
+    let last = null;
+    for (const it of items) { last = await guarded(`Saving ${it.name}…`, 'Shrinking it to fit, then sending it.', () => api('/notes', { method: 'POST', headers: { 'Content-Type': it.blob.type }, body: it.blob })) || last; }
+    await done();
+    location.hash = last && items.length === 1 ? '#/note/' + last.id : '#/';
+  };
 }
 
 /* ---------- note ---------- */
@@ -482,6 +552,7 @@ function waitingPage(note) {
   const paint = n => {
     const failed = n.status === 'failed', mac = window.MS_BACKEND.macState();
     const msg = failed ? esc(n.error || 'The Mac could not read this photo.') + ' Try again, or add a clearer photo.'
+      : n.unsent ? 'This photo is saved on this device. It uploads as soon as you are back online, and then your Mac reads it.'
       : mac.online ? 'Your Mac is reading this page. It shows up here when it is done.'
       : `Your Mac is off, so this page is waiting${mac.seen ? ` (it was last on ${ago(mac.seen)})` : ''}. It gets read as soon as the Mac is on. Nothing is lost.`;
     app.innerHTML = `
@@ -739,6 +810,18 @@ function renderInspector() {
   $$('[data-rm]', box).forEach(b => b.onclick = () => { S.draft.links.splice(+b.dataset.rm, 1); touch(); renderOverlay(); renderInspector(); });
 }
 
+function installBlock() {
+  const P = window.MS_PWA; if (!P) return '';
+  const where = P.platform();
+  const how = P.state.installed ? 'This is the installed app.'
+    : P.state.canInstall ? '' : where === 'ios' ? 'To install it on this iPhone or iPad: tap Share, then Add to Home Screen.'
+    : "To install it: open your browser's menu and choose Install app, or Add to Home Screen.";
+  const kept = window.MS_NO_OFFLINE ? 'This browser window cannot keep your notes for offline use. Open the site in a normal window.'
+    : P.state.persisted ? 'Your notes are kept on this device for offline use, and the browser has agreed not to clear them.'
+    : 'Your notes are kept on this device for offline use, but the browser may clear them if the device runs low on space. Installing the app makes that much less likely.';
+  return `${P.state.canInstall ? '<button class="nw-btn nw-btn--primary" id="install" type="button"><span>Install on this device</span></button>' : ''}
+    ${how ? `<p class="hint">${esc(how)}</p>` : ''}<p class="hint">${esc(kept)}</p>`;
+}
 function renderSense() {
   const n = S.note, v = S.preview || n, nar = n.narration;
   const summary = nar && nar.summary ? nar.summary : v.sense.summary;
@@ -848,7 +931,9 @@ async function profilePage() {
     </div>
     ${window.MS_BACKEND ? `<section class="prof-account"><h2 class="section-h">Your <em>account</em></h2>
       <p class="hint" style="margin-top:0">Signed in as ${esc(window.MS_BACKEND.account.email)}.</p>
+      ${installBlock()}
       <button class="nw-btn nw-btn--secondary" id="signOut" type="button"><span>Sign out</span></button></section>` : ''}`;
+  const inst = $('#install'); if (inst) inst.onclick = async () => { if (await window.MS_PWA.install()) toast('Installed. Open it from your home screen.', { mood: 'joyful' }); };
   const so = $('#signOut'); if (so) so.onclick = () => window.MS_BACKEND.account.signOut();
   const sh = $('#sh'), rows = Object.entries(p.shorthand);
   const addRow = (k = '', v = '') => {
@@ -913,6 +998,7 @@ async function addToNotebook() {
   if (window.MS_BOOT) await window.MS_BOOT;   // the website signs you in first
   if (window.MS_BACKEND) window.MS_BACKEND.subscribe(['mac'], paintFoot);
   window.addEventListener('ms:notice', e => toast(e.detail.message, { icon: 'info' }));
+  if (window.MS_BACKEND) { watchNet(); watchUpdate(); }
   try { HAS_NB = !!(await api('/status')).notebooks; } catch { HAS_NB = false; }
   if (HAS_NB) document.head.insertAdjacentHTML('beforeend', '<link rel="stylesheet" href="web/canvas.css">');
   route();

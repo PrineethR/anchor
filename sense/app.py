@@ -320,9 +320,13 @@ def render_ui(cloud: bool = False) -> str:
     """The one page. `cloud` builds the website's copy (sense/cloud), which signs in before it draws anything."""
     icons = {**json.loads((theme.STATIC / "icons.json").read_text()), **json.loads((theme.STATIC / "icons-extra.json").read_text())}
     boot = '<script type="module" src="cloud/boot.js"></script>' if cloud else ""
-    head = ('<link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icons/apple-touch-icon.png">'
-            '<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Make sense">'
-            '<meta name="theme-color" content="#FBF7F0">') if cloud else ""
+    head = ('<link rel="manifest" href="manifest.webmanifest"><link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">'
+            '<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">'
+            '<meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes">'
+            '<meta name="apple-mobile-web-app-title" content="Make sense"><meta name="apple-mobile-web-app-status-bar-style" content="default">'
+            '<meta name="format-detection" content="telephone=no">'
+            '<meta name="theme-color" media="(prefers-color-scheme: light)" content="#FBF7F0">'
+            '<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#141312">') if cloud else ""
     return (UI.read_text().replace("/*__CANVAS_CSS__*/", canvas.CSS).replace("/*__SHARE_CSS__*/", share.CSS)
             .replace("/*__ICONS__*/{}", json.dumps(icons)).replace("<!--__CLOUD__-->", boot).replace("<!--__CLOUD_HEAD__-->", head))
 

@@ -34,7 +34,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 LUCIDE = "0.460.0"  # the release the system's own icons were taken from
-EXTRA_ICONS = ["type", "undo-2", "redo-2", "mouse-pointer-2", "hand", "move-up-right", "maximize", "rotate-cw", "copy", "pencil", "square-dashed"]
+EXTRA_ICONS = ["type", "undo-2", "redo-2", "mouse-pointer-2", "hand", "move-up-right", "maximize", "rotate-cw", "copy", "pencil", "square-dashed", "camera", "download", "wifi-off", "refresh-cw"]
 COMPONENT_FILES = ["core/Button", "core/IconButton", "forms/Chip", "forms/Segmented", "forms/Switch", "forms/Input",
                    "surfaces/Card", "surfaces/Sheet", "surfaces/Tile", "feedback/Toast", "feedback/Badge", "navigation/TabBar"]
 

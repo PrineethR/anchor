@@ -1,1 +1,87 @@
-{"name": "Make sense", "short_name": "Make sense", "start_url": "./", "scope": "./", "display": "standalone", "background_color": "#FBF7F0", "theme_color": "#FBF7F0", "icons": [{"src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png"}, {"src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png"}]}
+{
+ "id": "./",
+ "name": "Make sense",
+ "short_name": "Make sense",
+ "lang": "en",
+ "dir": "ltr",
+ "description": "Turn photos of your handwritten notebook pages into notes you can read, and think on an endless canvas. Works offline.",
+ "start_url": "./",
+ "scope": "./",
+ "display": "standalone",
+ "display_override": [
+  "standalone",
+  "minimal-ui"
+ ],
+ "orientation": "any",
+ "background_color": "#FBF7F0",
+ "theme_color": "#FBF7F0",
+ "categories": [
+  "productivity",
+  "education"
+ ],
+ "icons": [
+  {
+   "src": "icons/icon-192.png",
+   "sizes": "192x192",
+   "type": "image/png",
+   "purpose": "any"
+  },
+  {
+   "src": "icons/icon-512.png",
+   "sizes": "512x512",
+   "type": "image/png",
+   "purpose": "any"
+  },
+  {
+   "src": "icons/icon-maskable-512.png",
+   "sizes": "512x512",
+   "type": "image/png",
+   "purpose": "maskable"
+  }
+ ],
+ "shortcuts": [
+  {
+   "name": "Notebooks",
+   "short_name": "Notebooks",
+   "description": "Open your endless pages",
+   "url": "./#/notebooks",
+   "icons": [
+    {
+     "src": "icons/icon-192.png",
+     "sizes": "192x192",
+     "type": "image/png",
+     "purpose": "any"
+    }
+   ]
+  },
+  {
+   "name": "Your pages",
+   "short_name": "Pages",
+   "description": "Add a photo or open a page",
+   "url": "./#/",
+   "icons": [
+    {
+     "src": "icons/icon-192.png",
+     "sizes": "192x192",
+     "type": "image/png",
+     "purpose": "any"
+    }
+   ]
+  }
+ ],
+ "share_target": {
+  "action": "share-target",
+  "method": "POST",
+  "enctype": "multipart/form-data",
+  "params": {
+   "files": [
+    {
+     "name": "photos",
+     "accept": [
+      "image/*"
+     ]
+    }
+   ]
+  }
+ }
+}

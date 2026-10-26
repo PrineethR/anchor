@@ -1,19 +1,39 @@
 // Keeps the site's own files on this device, so it opens with no connection. Your notes are kept by Firestore itself, not here.
 // Build: build.py fills in the version and the file list. A new build means a new cache; the old one is dropped.
 // Everything is relative to where this file lives (its scope), so the site works at a domain's root or in a folder of one (prineethr.com/anchor/app/).
+//
+// Updates: a new version installs beside the running one and WAITS. The page tells you it is ready, and only when you
+// accept does it take over (message 'skip-waiting'). Taking over mid-session would swap files out from under a page that
+// has already loaded half of the old ones. The very first install has nothing to wait for and starts at once.
 const VERSION = '__VERSION__';
 const FILES = __FILES__;                       // paths from this folder; '' is the page itself
 const CACHE = 'makesense-' + VERSION;
+const SHARED = 'makesense-shared';             // photos shared to the app, until you say whether to add them (the page reads this name too)
 const SCOPE = self.registration.scope;         // e.g. https://prineethr.com/anchor/app/
+const SHARE_TARGET = new URL('share-target', SCOPE).href;
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => Promise.all(FILES.map(f => c.add(new Request(new URL(f, SCOPE).href, { cache: 'reload' })).catch(() => {})))).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(CACHE).then(c => Promise.all(FILES.map(f => c.add(new Request(new URL(f, SCOPE).href, { cache: 'reload' })).catch(() => {})))));
 });
+self.addEventListener('message', e => { if (e.data === 'skip-waiting') self.skipWaiting(); });
 self.addEventListener('activate', e => {
-  e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k.startsWith('makesense-') && k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim()));
+  e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k.startsWith('makesense-') && k !== CACHE && k !== SHARED).map(k => caches.delete(k)))).then(() => self.clients.claim()));
 });
+
+/** "Share to Make sense" from a gallery or camera: keep the photos, then open the page that asks what to do with them. */
+async function stageShared(request) {
+  try {
+    const files = (await request.formData()).getAll('photos').filter(f => typeof f !== 'string' && /^image\//.test(f.type)).slice(0, 6);
+    await caches.delete(SHARED);               // whatever an earlier share left behind
+    const c = await caches.open(SHARED);
+    await Promise.all(files.map((f, i) => c.put(new URL(`shared/${i}`, SCOPE).href, new Response(f, { headers: { 'Content-Type': f.type, 'X-Name': encodeURIComponent(f.name || `photo-${i}`) } }))));
+  } catch { /* nothing usable arrived: the page says so */ }
+  return Response.redirect(new URL('#/shared', SCOPE).href, 303);
+}
+
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
+  if (e.request.method === 'POST' && url.href === SHARE_TARGET) return e.respondWith(stageShared(e.request));
   // Only our own files: not Firebase, not Google, not another page on this domain, not Firebase's sign-in helper (/__/auth/…).
   if (e.request.method !== 'GET' || !url.href.startsWith(SCOPE) || url.pathname.includes('/__/')) return;
   e.respondWith((async () => {

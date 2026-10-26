@@ -60,6 +60,40 @@ class BuildTests(unittest.TestCase):
         self.assertEqual(cfg["firebase"]["projectId"], "anchor-notes-prineeth")
         self.assertNotIn("__signInAs", self.text("cloud/boot.js").split("if (cfg.emulator)")[0])   # the test sign-in exists only behind the emulator switch
 
+    def test_the_manifest_meets_what_browsers_ask_of_an_installable_app(self):
+        import cv2
+        from urllib.parse import urljoin
+        m = json.loads(self.text("manifest.webmanifest"))
+        base = "https://prineethr.com/anchor/app/manifest.webmanifest"
+        scope = urljoin(base, m["scope"])
+        self.assertEqual(scope, "https://prineethr.com/anchor/app/")
+        self.assertTrue(urljoin(base, m["start_url"]).startswith(scope))
+        self.assertTrue(m["name"] and m["short_name"] and m["id"])
+        self.assertIn(m["display"], ("standalone", "fullscreen", "minimal-ui"))
+        sizes = {}
+        for icon in m["icons"]:
+            img = cv2.imread(str(self.out / icon["src"]))
+            self.assertIsNotNone(img, icon["src"])
+            self.assertEqual(f"{img.shape[1]}x{img.shape[0]}", icon["sizes"], "the manifest tells the truth about each icon's size")
+            sizes.setdefault(icon.get("purpose", "any"), set()).add(img.shape[0])
+        self.assertTrue({192, 512} <= sizes["any"], "an icon at 192 and one at 512")
+        self.assertIn(512, sizes["maskable"], "a maskable icon, so a phone's round or squircle crop does not clip the mark")
+        for sc in m["shortcuts"]:
+            self.assertTrue(urljoin(base, sc["url"]).startswith(scope))
+        t = m["share_target"]
+        self.assertTrue(urljoin(base, t["action"]).startswith(scope))
+        self.assertEqual((t["method"], t["enctype"]), ("POST", "multipart/form-data"))
+        self.assertEqual(t["params"]["files"][0]["accept"], ["image/*"])
+        self.assertIn(f'new URL(\'{t["action"]}\', SCOPE)', self.text("sw.js"), "the service worker answers the address the manifest names")
+
+    def test_the_page_names_its_icons_and_colours_for_light_and_dark(self):
+        html = self.text("index.html")
+        for needle in ('rel="manifest"', 'rel="apple-touch-icon"', 'rel="icon"', 'name="apple-mobile-web-app-capable"',
+                       'name="theme-color" media="(prefers-color-scheme: dark)"', 'name="theme-color" media="(prefers-color-scheme: light)"', "viewport-fit=cover"):
+            self.assertIn(needle, html)
+        for ref in re.findall(r'<link rel="(?:icon|apple-touch-icon|manifest)"[^>]*href="([^"]+)"', html):
+            self.assertTrue((self.out / ref).is_file(), ref)
+
     def test_a_relative_output_folder_gets_the_whole_site(self):
         """`--out app` from the repository root once lost the Firebase bundle: the bundler runs from another folder."""
         import os

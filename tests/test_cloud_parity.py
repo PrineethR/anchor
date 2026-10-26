@@ -296,6 +296,14 @@ class ServiceWorkerTests(unittest.TestCase):
         self.assertEqual(out["post"], "passed through")
         self.assertIn(out["offlineShell"], ("cached:" + folder, "network:" + folder), "the page opens with no connection")
         self.assertIn("Offline", out["offlineUncached"])
+        self.assertEqual(out["updates"], {"skippedAtInstall": 0, "skippedByStrangers": 0, "skippedWhenAsked": 1},
+                         "a new version waits until the page asks it to take over: swapping files mid-session breaks the page that has half of the old ones")
+        self.assertTrue(out["sharedPhotoSurvivesAnUpdate"], "a photo waiting for your yes survives a new version taking over")
+        self.assertEqual(out["share"]["status"], 303)
+        self.assertEqual(out["share"]["redirectTo"], folder + "#/shared", "after a share, the page that asks whether to add it")
+        self.assertEqual(out["share"]["kept"], [folder + "shared/0", folder + "shared/1"], "images only: not the html file, not a text field")
+        self.assertEqual(out["shareFromElsewhere"], "passed through")
+        self.assertEqual(out["shareWithTooMany"], 6, "at most six photos in one share")
         return out
 
     def test_it_keeps_the_site_and_only_the_site(self):

@@ -86,6 +86,24 @@ The site's code is the Mac app's `sense/ui.html`, `canvas.js` and design system,
 `backend.js` answers the app's calls from Firestore where the Python server answers them from files, and `meaning.js`, `layout.js`, `render.js`, `notebook.js`, `pageclean.js`
 are the reading engine's logic ported to JavaScript line for line. `tests/test_cloud_parity.py` runs several hundred cases through both and fails if they ever differ by a character.
 
+## As an installed app
+
+Open the site once, signed in, with a connection. After that it opens with no connection at all, from the device's copy of the app's files and of your notes. To install it: on Android or desktop Chrome,
+*You → Install on this device* (or the browser menu → Install app); on iPhone, Share → Add to Home Screen. Installed, it opens full-screen, from its own icon, and the browser is much less likely to clear its offline copies
+(the *You* page says whether this browser has agreed to keep them).
+
+- **Offline** a small notice at the top says so, and your changes (words fixed, notebooks written in, photos added) are kept on the device and sent when the connection returns, then a note says they went.
+  A photo added offline shows as "Not sent yet" until it is on the server, and only then waits for the Mac. Nothing is sent while the app is closed: it sends the next time you open it with a connection.
+- **Take a photo** on a phone opens the camera straight away; *Choose from your library* is the other button.
+- **Share to the app** (Android and desktop Chrome, once installed): share a photo from the gallery or camera and pick Make sense. The app shows it and asks before adding it to your pages, so nothing arrives unasked.
+  iPhone does not let web apps receive shares; use *Choose from your library* there.
+- **Updates** never swap files under a page that is open. A new version downloads quietly and a message offers *Reload*; until you accept, the version you are using keeps working. The app looks for one when you return to it after an hour away.
+- **Not built:** a notification when the Mac has read a page (needs a push service and a permission prompt of its own), and sending queued photos while the app is closed (browsers only offer that on Android Chrome).
+
+Checks, from cheapest to most real: `tests/test_cloud_build.py` (the manifest against what browsers require to install, every path relative), `tests/test_cloud_parity.py` (the service worker's rules, run against a fake cache),
+and `tests/e2e/pwa.mjs`, which drives real Chromium and WebKit (Safari's engine) against the emulators: registers the worker in a folder, reloads with the network cut and finds the app and its data, writes offline and watches it arrive,
+announces and accepts an update, receives a shared photo, and asks Chrome whether it is installable. See the header of that file for the five commands to run it.
+
 ## When two devices disagree
 
 * **Notebooks** move forward one revision at a time (a security rule enforces it). If a device was offline while you changed the same notebook elsewhere, its save is refused when it
@@ -116,7 +134,6 @@ npx firebase-tools emulators:exec --only auth,firestore --project demo-anchor-no
 
 ## Not yet verified on the real thing
 
-Built and tested against the emulators and in a browser; **not yet run against your real project**. Specifically untried: Google's own sign-in popup (the emulator signs in a made-up
-account), the service worker that lets the page itself open with no connection at all (its logic is tested against a fake cache; the in-app browser I used cannot run service workers, so open the deployed
-site once online, switch to airplane mode, and reload to check), the real Firestore's behaviour with the first push of all your pages, and Safari on iPhone. Things that are not built: summaries written by Gemini
-(they need a key and stay on the Mac), and the words beside a photo you add straight onto a notebook (bring the page in from *Pages* for that).
+Built and tested against the emulators, in a browser, and in real Chromium and WebKit (offline start, offline writes, updates, sharing, installability) served from a folder of a domain; **not yet run against your real project or domain**.
+Still untried: Google's own sign-in popup (the emulator signs in a made-up account), an actual install to a phone's home screen, Safari on an iPhone itself (WebKit under Playwright is the same engine, not the same app),
+a share from a real Android share sheet, and the real Firestore's behaviour with the first push of all your pages. Not built: summaries written by Gemini (they need a key and stay on the Mac), and the words beside a photo you add straight onto a notebook (bring the page in from *Pages* for that).
