@@ -1,0 +1,105 @@
+/* Noteworthy design system: what ds.js's shapes, moods, backdrops and scenes need.
+   Copied from the Noteworthy app's style.css (ILLUSTRATION & MOTION). Vendored; see SOURCE.md. */
+:root{
+    /* The light-theme -ink shades, fixed: glyphs on clay stay dark in both
+       themes because clay is always mixed toward paper. */
+    --blush-ink-fixed:#A8356C; --berry-ink-fixed:#A81D62; --violet-ink-fixed:#6E3FA0;
+    --sky-ink-fixed:#0D6A9E; --cobalt-ink-fixed:#1A4FBC; --mint-ink-fixed:#147040;
+    --forest-ink-fixed:#15533A; --tomato-ink-fixed:#B8310E; --tangerine-ink-fixed:#A65100;
+    --sun-ink-fixed:#8A6400;
+
+    --tabbar-h: 56px;
+    --tabbar-space: calc(var(--tabbar-h) + 20px + env(safe-area-inset-bottom, 0px));
+}
+
+
+/* ── Primitives ─────────────────────────────────────────────── */
+.nw-shape{ display: block; overflow: visible; flex-shrink: 0; }
+.nw-icon{ display: block; flex-shrink: 0; }
+
+@keyframes nw-blink{ 0%,92%,100%{ transform: scaleY(1); } 96%{ transform: scaleY(.1); } }
+@keyframes nw-bob{ 0%,100%{ transform: translateY(0) rotate(0); } 50%{ transform: translateY(-6%) rotate(-3deg); } }
+.nw-mood--alive .nw-mood__eyes{ transform-box: fill-box; transform-origin: center; animation: nw-blink 4.2s infinite; }
+.nw-mood--alive{ animation: nw-bob 3.6s var(--ease-in-out) infinite; }
+
+.nw-clay{ position: relative; display: inline-grid; place-items: center; flex-shrink: 0; transition: transform var(--dur-slow) var(--ease-spring); }
+.nw-clay > .nw-shape{ grid-area: 1 / 1; }
+.nw-clay--tilt{ transform: perspective(400px) rotateX(10deg) rotateY(-14deg) rotate(-4deg); }
+@media (hover: hover){ .nw-clay:hover{ transform: perspective(400px) rotateX(0) rotateY(0) translateY(-4px) scale(1.04); } }
+.nw-clay__glyph{ position: absolute; inset: 0; display: grid; place-items: center; filter: drop-shadow(0 1px 0 rgba(255,255,255,.55)); }
+
+.nw-scatter{ position: absolute; inset: 0; overflow: visible; pointer-events: none; }
+.nw-scatter__mk{ animation: nw-bd-float var(--t, 8s) var(--ease-in-out) infinite; transform-box: fill-box; transform-origin: center; }
+
+.nw-bd{ position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
+.nw-bd__it{ position: absolute; transform: rotate(var(--r)); }
+.nw-bd__mk{ position: absolute; overflow: visible; transform: rotate(var(--r)); }
+.nw-bd--alive .nw-bd__it{ animation: nw-bd-drift var(--t) var(--ease-in-out) infinite; }
+.nw-bd--alive .nw-bd__mk{ animation: nw-bd-float var(--t) var(--ease-in-out) infinite; }
+@keyframes nw-bd-drift{ 0%,100%{ transform: translate(0,0) rotate(var(--r)); } 50%{ transform: translate(14px,-18px) rotate(calc(var(--r) + 10deg)); } }
+@keyframes nw-bd-float{ 0%,100%{ transform: translateY(0) rotate(var(--r)); } 50%{ transform: translateY(-10px) rotate(calc(var(--r) + 30deg)); } }
+
+.nw-burst{ position: fixed; z-index: 2000; width: 12px; height: 12px; pointer-events: none; overflow: visible;
+    animation: nw-burst .62s var(--ease-out) forwards; }
+@keyframes nw-burst{
+    0%{ transform: translate(-50%,-50%) scale(.3); opacity: 1; }
+    100%{ transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) rotate(var(--rot)) scale(1); opacity: 0; }
+}
+
+.nw-ring{ position: relative; display: grid; place-items: center; flex-shrink: 0; }
+.nw-ring svg{ position: absolute; inset: 0; transform: rotate(-90deg); }
+.nw-ring__v{ transition: stroke-dashoffset var(--dur-slow) var(--ease-out); }
+.nw-ring__in{ position: relative; font-family: var(--font-ui); }
+
+/* The illustration scenes and their idle loops. Every loop here runs on the
+   main thread (they move parts inside an SVG), so the app keeps them for
+   what is on screen briefly — loading, the welcome, empty states — and
+   never on a screen you sit on. */
+.nwi{ display: block; overflow: visible; max-width: 100%; height: auto; }
+.nwi [class*="nwi-a-"]{ transform-box: fill-box; transform-origin: center; }
+@keyframes nwi-bob{ 0%,100%{ transform: translateY(0); } 50%{ transform: translateY(-5px); } }
+@keyframes nwi-sway{ 0%,100%{ transform: rotate(-5deg); } 50%{ transform: rotate(5deg); } }
+@keyframes nwi-wiggle{ 0%,100%{ transform: rotate(0); } 20%{ transform: rotate(-7deg); } 40%{ transform: rotate(5deg); } 60%{ transform: rotate(-3deg); } 80%{ transform: rotate(0); } }
+@keyframes nwi-twinkle{ 0%,100%{ transform: scale(1) rotate(0); opacity: 1; } 50%{ transform: scale(.45) rotate(45deg); opacity: .35; } }
+@keyframes nwi-pulse{ 0%,100%{ transform: scale(1); opacity: 1; } 50%{ transform: scale(1.14); opacity: .5; } }
+@keyframes nwi-flicker{ 0%,38%,100%{ opacity: 1; } 42%{ opacity: .15; } 46%{ opacity: 1; } 50%{ opacity: .25; } 54%{ opacity: 1; } }
+@keyframes nwi-draw{ from{ stroke-dashoffset: 1; } to{ stroke-dashoffset: 0; } }
+@keyframes nwi-write{ 0%{ stroke-dashoffset: 1; opacity: 1; } 55%,85%{ stroke-dashoffset: 0; opacity: 1; } 100%{ stroke-dashoffset: 0; opacity: 0; } }
+@keyframes nwi-scribble{ 0%{ transform: translate(-48px,2px) rotate(0); } 14%{ transform: translate(-40px,-3px) rotate(4deg); } 28%{ transform: translate(-28px,2px) rotate(-2deg); } 42%{ transform: translate(-14px,-3px) rotate(4deg); } 55%,85%{ transform: translate(0,0) rotate(0); } 100%{ transform: translate(-48px,2px) rotate(0); } }
+@keyframes nwi-hop{ 0%,100%{ transform: translateY(0) scale(1,1); } 15%{ transform: translateY(0) scale(1.14,.86); } 40%{ transform: translateY(-26px) scale(.93,1.08); } 62%{ transform: translateY(0) scale(1.1,.9); } 78%{ transform: translateY(0) scale(1,1); } }
+@keyframes nwi-shadow{ 0%,15%,62%,100%{ transform: scaleX(1); opacity: 1; } 40%{ transform: scaleX(.5); opacity: .45; } }
+@keyframes nwi-drift{ 0%,100%{ transform: translateX(0); } 50%{ transform: translateX(12px); } }
+@keyframes nwi-march{ to{ stroke-dashoffset: -22; } }
+@keyframes nwi-blink{ 0%,92%,100%{ transform: scaleY(1); } 96%{ transform: scaleY(.1); } }
+@keyframes nwi-spin{ to{ transform: rotate(360deg); } }
+@keyframes nwi-rise{ 0%,100%{ transform: translateY(0) rotate(-2deg); } 50%{ transform: translateY(-7px) rotate(3deg); } }
+@keyframes nwi-burst{ 0%{ transform: scale(.2); opacity: 0; } 12%{ opacity: 1; } 50%{ transform: scale(1); opacity: 1; } 78%,100%{ transform: scale(1.08); opacity: 0; } }
+@keyframes nwi-look{ 0%,35%{ transform: translateX(0); } 45%,78%{ transform: translateX(3px); } 88%{ transform: translateX(-2px); } 100%{ transform: translateX(0); } }
+@keyframes nwi-zz{ 0%{ transform: translate(0,0); opacity: 0; } 25%{ opacity: 1; } 100%{ transform: translate(9px,-20px); opacity: 0; } }
+@keyframes nwi-fly{ 0%,100%{ transform: translate(0,0) rotate(0); } 50%{ transform: translate(5px,-9px) rotate(-7deg); } }
+@keyframes nwi-pop{ 0%{ transform: scale(0); } 60%{ transform: scale(1.18); } 100%{ transform: scale(1); } }
+@keyframes nwi-peek{ 0%,100%{ transform: translateY(0); } 50%{ transform: translateY(-3px); } }
+.nwi-a-bob{ animation: nwi-bob 3.2s var(--ease-in-out) infinite; }
+.nwi-a-sway{ animation: nwi-sway 3.6s var(--ease-in-out) infinite; }
+.nwi-a-wiggle{ animation: nwi-wiggle 2.6s var(--ease-in-out) infinite; }
+.nwi-a-twinkle{ animation: nwi-twinkle 2.2s var(--ease-in-out) infinite; }
+.nwi-a-pulse{ animation: nwi-pulse 2.4s var(--ease-in-out) infinite; }
+.nwi-a-flicker{ animation: nwi-flicker 2.8s linear infinite; }
+.nwi-a-draw{ stroke-dasharray: 1; animation: nwi-draw .6s var(--ease-out) both; }
+.nwi-a-write{ stroke-dasharray: 1; animation: nwi-write 3.2s var(--ease-in-out) infinite; }
+.nwi-a-scribble{ animation: nwi-scribble 3.2s var(--ease-in-out) infinite; }
+.nwi-a-hop{ animation: nwi-hop 1.3s var(--ease-in-out) infinite; }
+.nwi-a-shadow{ animation: nwi-shadow 1.3s var(--ease-in-out) infinite; }
+.nwi-a-drift{ animation: nwi-drift 7s var(--ease-in-out) infinite; }
+.nwi-a-march{ animation: nwi-march 1s linear infinite; }
+.nwi-a-blink{ animation: nwi-blink 4.2s infinite; }
+.nwi-a-spin{ animation: nwi-spin 30s linear infinite; }
+.nwi-a-rise{ animation: nwi-rise 4.4s var(--ease-in-out) infinite; }
+.nwi-a-burst{ animation: nwi-burst 2.6s var(--ease-out) infinite; }
+.nwi-a-look{ animation: nwi-look 4.6s var(--ease-in-out) infinite; }
+.nwi-a-zz{ animation: nwi-zz 3s var(--ease-out) infinite; }
+.nwi-a-fly{ animation: nwi-fly 2.6s var(--ease-in-out) infinite; }
+.nwi-a-pop{ animation: nwi-pop .5s var(--ease-spring) both; }
+.nwi-a-peek{ animation: nwi-peek 3.4s var(--ease-in-out) infinite; }
+.nwi--still [class*="nwi-a-"]{ animation: none !important; }
+.nwi--still .nwi-a-draw, .nwi--still .nwi-a-write{ stroke-dasharray: none; }

@@ -1,0 +1,381 @@
+{
+  "page_id": "page-01",
+  "page_size": [
+    1188,
+    840
+  ],
+  "_notes": "Gold for page-01, confirmed by author 2026-10-12. Coordinates are px in page-01.jpg (flattened with `anchor.flatten --rot 3`, 4 px/mm, A4 landscape). The O before 'core' is a doodle. 'TRY TO' is a connector label on Transition -> core.",
+  "elements": [
+    {
+      "id": "transition",
+      "type": "text",
+      "bbox": [
+        48,
+        38,
+        90,
+        24
+      ],
+      "text": "Transition"
+    },
+    {
+      "id": "curiosity",
+      "type": "text",
+      "bbox": [
+        138,
+        70,
+        80,
+        26
+      ],
+      "text": "curiosity"
+    },
+    {
+      "id": "doodle_o",
+      "type": "doodle",
+      "bbox": [
+        95,
+        216,
+        22,
+        30
+      ]
+    },
+    {
+      "id": "core",
+      "type": "text",
+      "bbox": [
+        116,
+        214,
+        56,
+        32
+      ],
+      "text": "core"
+    },
+    {
+      "id": "core_shape",
+      "type": "shape",
+      "bbox": [
+        72,
+        180,
+        150,
+        142
+      ],
+      "contains": [
+        "doodle_o",
+        "core"
+      ]
+    },
+    {
+      "id": "peripheral",
+      "type": "text",
+      "bbox": [
+        250,
+        183,
+        92,
+        52
+      ],
+      "text": "peripheral units",
+      "underline": true
+    },
+    {
+      "id": "idea",
+      "type": "text",
+      "bbox": [
+        268,
+        268,
+        160,
+        80
+      ],
+      "text": "the idea of transitions",
+      "underline": true
+    },
+    {
+      "id": "transdisc",
+      "type": "text",
+      "bbox": [
+        478,
+        192,
+        148,
+        42
+      ],
+      "text": "transdisciplinarity"
+    },
+    {
+      "id": "grounded",
+      "type": "text",
+      "bbox": [
+        535,
+        272,
+        135,
+        48
+      ],
+      "text": "stay grounded."
+    },
+    {
+      "id": "mindset",
+      "type": "text",
+      "bbox": [
+        118,
+        436,
+        130,
+        64
+      ],
+      "text": "mindset of posture.",
+      "underline": true
+    },
+    {
+      "id": "eu",
+      "type": "text",
+      "bbox": [
+        392,
+        398,
+        100,
+        42
+      ],
+      "text": "Looking into EU.",
+      "underline": true
+    },
+    {
+      "id": "phds_design",
+      "type": "text",
+      "bbox": [
+        432,
+        476,
+        80,
+        46
+      ],
+      "text": "PhDs in Design",
+      "underline": true
+    },
+    {
+      "id": "add_luis",
+      "type": "text",
+      "bbox": [
+        46,
+        522,
+        95,
+        75
+      ],
+      "text": "Add Luis Garcia",
+      "underline": true
+    },
+    {
+      "id": "phds_hci",
+      "type": "text",
+      "bbox": [
+        74,
+        636,
+        64,
+        64
+      ],
+      "text": "PhDs in HCI"
+    },
+    {
+      "id": "thread",
+      "type": "text",
+      "bbox": [
+        494,
+        558,
+        134,
+        56
+      ],
+      "text": "a connecting thread.",
+      "underline": true
+    },
+    {
+      "id": "story",
+      "type": "text",
+      "bbox": [
+        690,
+        498,
+        166,
+        40
+      ],
+      "text": "telling a story"
+    },
+    {
+      "id": "tangible",
+      "type": "text",
+      "bbox": [
+        622,
+        56,
+        80,
+        34
+      ],
+      "text": "tangible"
+    },
+    {
+      "id": "intangible",
+      "type": "text",
+      "bbox": [
+        792,
+        68,
+        95,
+        34
+      ],
+      "text": "intangible"
+    },
+    {
+      "id": "society",
+      "type": "text",
+      "bbox": [
+        948,
+        26,
+        176,
+        106
+      ],
+      "text": "the way we think about design & society.",
+      "underline": true
+    },
+    {
+      "id": "gaps",
+      "type": "text",
+      "bbox": [
+        850,
+        240,
+        48,
+        28
+      ],
+      "text": "GAPS",
+      "caps": true
+    },
+    {
+      "id": "framework",
+      "type": "text",
+      "bbox": [
+        956,
+        228,
+        106,
+        34
+      ],
+      "text": "framework.",
+      "underline": true
+    },
+    {
+      "id": "critique",
+      "type": "text",
+      "bbox": [
+        832,
+        318,
+        86,
+        34
+      ],
+      "text": "CRITIQUE",
+      "caps": true,
+      "underline": true
+    },
+    {
+      "id": "tdesign",
+      "type": "text",
+      "bbox": [
+        985,
+        310,
+        145,
+        52
+      ],
+      "text": "of transition design.",
+      "underline": true
+    },
+    {
+      "id": "play",
+      "type": "text",
+      "bbox": [
+        868,
+        603,
+        172,
+        167
+      ],
+      "text": "PLAY is TRANSITION & TRANSITION is PLAY",
+      "caps": true,
+      "underline": true
+    }
+  ],
+  "links": [
+    {
+      "id": "l1",
+      "kind": "connector",
+      "from": "transition",
+      "to": "core",
+      "label": "TRY TO",
+      "caps": true,
+      "underline": true
+    },
+    {
+      "id": "l2",
+      "kind": "hook",
+      "from": "transition",
+      "to": "curiosity"
+    },
+    {
+      "id": "l4",
+      "kind": "flow",
+      "from": "core_shape",
+      "to": "peripheral"
+    },
+    {
+      "id": "l5",
+      "kind": "flow",
+      "from": "core_shape",
+      "to": "mindset"
+    },
+    {
+      "id": "l6",
+      "kind": "flow",
+      "from": "idea",
+      "to": "transdisc"
+    },
+    {
+      "id": "l7",
+      "kind": "flow",
+      "from": "transdisc",
+      "to": "grounded"
+    },
+    {
+      "id": "l8",
+      "kind": "flow",
+      "from": "eu",
+      "to": "phds_design"
+    },
+    {
+      "id": "l9",
+      "kind": "flow",
+      "from": "thread",
+      "to": "story"
+    },
+    {
+      "id": "l10",
+      "kind": "flow",
+      "from": "story",
+      "to": "play"
+    },
+    {
+      "id": "l11",
+      "kind": "connector",
+      "from": "tangible",
+      "to": "intangible",
+      "label": "to"
+    },
+    {
+      "id": "l12",
+      "kind": "flow",
+      "from": "intangible",
+      "to": "gaps"
+    },
+    {
+      "id": "l13",
+      "kind": "flow",
+      "from": "gaps",
+      "to": "framework"
+    },
+    {
+      "id": "l14",
+      "kind": "flow",
+      "from": "gaps",
+      "to": "critique"
+    },
+    {
+      "id": "l15",
+      "kind": "flow",
+      "from": "critique",
+      "to": "tdesign"
+    }
+  ]
+}

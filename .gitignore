@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Environments
+.venv/
+venv/
+ENV/
+env/
+
+# Build artifacts & compiled binaries
+build/
+*.o
+*.out
+
+# macOS
+.DS_Store
+
+# Anchor user data & local session files
+notes/
+captures/
+data/preds/
+
+# Secrets / credentials / environment files
+.env
+*.env
+*.pem
+*.key
+credentials.json
+service-account*.json
+firebase-key*.json

@@ -1,0 +1,270 @@
+{
+  "page_id": "page-01",
+  "page_size": [
+    1188,
+    840
+  ],
+  "elements": [
+    {
+      "id": "t1",
+      "type": "text",
+      "bbox": [
+        951.5,
+        33.2,
+        100.6,
+        19.1
+      ],
+      "text": "me way",
+      "caps": false,
+      "confidence": 1
+    },
+    {
+      "id": "t2",
+      "type": "text",
+      "bbox": [
+        997.0,
+        35.8,
+        124.6,
+        92.0
+      ],
+      "text": "we think about derm e socery",
+      "caps": false,
+      "confidence": 0.5
+    },
+    {
+      "id": "t3",
+      "type": "text",
+      "bbox": [
+        49.2,
+        38.0,
+        85.5,
+        28.8
+      ],
+      "text": "Frankhor",
+      "caps": false,
+      "confidence": 1
+    },
+    {
+      "id": "t4",
+      "type": "text",
+      "bbox": [
+        617.3,
+        50.6,
+        271.5,
+        50.2
+      ],
+      "text": "tangibe 7, intangible",
+      "caps": false,
+      "confidence": 1
+    },
+    {
+      "id": "t5",
+      "type": "text",
+      "bbox": [
+        98.0,
+        66.0,
+        120.0,
+        34.0
+      ],
+      "text": "Lauriotity",
+      "caps": false,
+      "confidence": 0.5
+    },
+    {
+      "id": "t6",
+      "type": "text",
+      "bbox": [
+        253.7,
+        179.2,
+        89.9,
+        48.8
+      ],
+      "text": "perpueral units",
+      "caps": false,
+      "confidence": 1
+    },
+    {
+      "id": "t7",
+      "type": "text",
+      "bbox": [
+        473.1,
+        181.5,
+        214.4,
+        156.8
+      ],
+      "text": "traniducipinaut stay grounded.",
+      "caps": false,
+      "confidence": 0.5
+    },
+    {
+      "id": "t8",
+      "type": "text",
+      "bbox": [
+        96.0,
+        214.0,
+        72.0,
+        34.0
+      ],
+      "text": "Ocore",
+      "caps": false,
+      "confidence": 0.5
+    },
+    {
+      "id": "t9",
+      "type": "text",
+      "bbox": [
+        936.0,
+        228.5,
+        124.7,
+        30.1
+      ],
+      "text": "framework.",
+      "caps": false,
+      "confidence": 1
+    },
+    {
+      "id": "t10",
+      "type": "text",
+      "bbox": [
+        850.0,
+        244.0,
+        41.3,
+        22.0
+      ],
+      "text": "GAPS",
+      "caps": true,
+      "confidence": 1
+    },
+    {
+      "id": "t11",
+      "type": "text",
+      "bbox": [
+        268.2,
+        266.9,
+        91.2,
+        31.9
+      ],
+      "text": "the idea",
+      "caps": false,
+      "confidence": 1
+    },
+    {
+      "id": "t12",
+      "type": "text",
+      "bbox": [
+        336.5,
+        286.5,
+        87.0,
+        34.3
+      ],
+      "text": "travishon",
+      "caps": false,
+      "confidence": 0.5
+    },
+    {
+      "id": "t13",
+      "type": "text",
+      "bbox": [
+        830.5,
+        304.7,
+        90.3,
+        63.8
+      ],
+      "text": "CRITQUE",
+      "caps": true,
+      "confidence": 1
+    },
+    {
+      "id": "t14",
+      "type": "text",
+      "bbox": [
+        959.5,
+        304.7,
+        154.8,
+        63.8
+      ],
+      "text": "of trantition",
+      "caps": false,
+      "confidence": 1
+    },
+    {
+      "id": "t15",
+      "type": "text",
+      "bbox": [
+        115.6,
+        421.8,
+        143.0,
+        82.2
+      ],
+      "text": "mindset of partue.",
+      "caps": false,
+      "confidence": 0.5
+    },
+    {
+      "id": "t16",
+      "type": "text",
+      "bbox": [
+        432.0,
+        474.0,
+        78.0,
+        62.0
+      ],
+      "text": "PhDS in Desig",
+      "caps": false,
+      "confidence": 0.5
+    },
+    {
+      "id": "t17",
+      "type": "text",
+      "bbox": [
+        705.5,
+        497.2,
+        151.2,
+        38.5
+      ],
+      "text": "telling a story",
+      "caps": false,
+      "confidence": 1
+    },
+    {
+      "id": "t18",
+      "type": "text",
+      "bbox": [
+        46.0,
+        520.0,
+        95.9,
+        184.0
+      ],
+      "text": "Add.? Luis Garcia PhDs \u043d\u0430",
+      "caps": false,
+      "confidence": 0.5
+    },
+    {
+      "id": "t19",
+      "type": "text",
+      "bbox": [
+        541.8,
+        565.0,
+        74.8,
+        43.0
+      ],
+      "text": "connechn wread",
+      "caps": false,
+      "confidence": 1
+    },
+    {
+      "id": "t20",
+      "type": "text",
+      "bbox": [
+        869.7,
+        604.0,
+        164.4,
+        107.2
+      ],
+      "text": "PLAI 'STRANGTION X RANSTON",
+      "caps": true,
+      "confidence": 0.5
+    }
+  ],
+  "links": []
+}

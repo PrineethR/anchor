@@ -1,0 +1,128 @@
+{
+  "when": "2026-10-12 13:14",
+  "summary": {
+    "pages": 1,
+    "text": {
+      "detection_p": 0.8,
+      "detection_r": 0.7272727272727273,
+      "detection_f1": 0.761904761904762,
+      "cer_matched": 0.352059925093633,
+      "cer_end_to_end": 0.4985507246376812,
+      "exact_match_rate": 0.13636363636363635
+    },
+    "links": {
+      "top1_p": 1.0,
+      "top1_r": 0.0,
+      "top1_f1": 0.0,
+      "top2_recall": 0.0,
+      "reversed": 0,
+      "kind_accuracy": null,
+      "connector_label_accuracy": null,
+      "mean_conf_correct": null,
+      "mean_conf_wrong": null
+    },
+    "emphasis": {
+      "underline_p": 1.0,
+      "underline_r": 0.0,
+      "underline_f1": 0.0,
+      "caps_p": 1.0,
+      "caps_r": 0.75,
+      "caps_f1": 0.8571428571428571,
+      "shape_f1": 0.0,
+      "container_jaccard": null
+    },
+    "doodles": {
+      "gold": 1,
+      "f1": 0.0,
+      "read_as_text": 0
+    }
+  },
+  "pages": {
+    "page-01": {
+      "summary": {
+        "pages": 1,
+        "text": {
+          "detection_p": 0.8,
+          "detection_r": 0.7272727272727273,
+          "detection_f1": 0.761904761904762,
+          "cer_matched": 0.352059925093633,
+          "cer_end_to_end": 0.4985507246376812,
+          "exact_match_rate": 0.13636363636363635
+        },
+        "links": {
+          "top1_p": 1.0,
+          "top1_r": 0.0,
+          "top1_f1": 0.0,
+          "top2_recall": 0.0,
+          "reversed": 0,
+          "kind_accuracy": null,
+          "connector_label_accuracy": null,
+          "mean_conf_correct": null,
+          "mean_conf_wrong": null
+        },
+        "emphasis": {
+          "underline_p": 1.0,
+          "underline_r": 0.0,
+          "underline_f1": 0.0,
+          "caps_p": 1.0,
+          "caps_r": 0.75,
+          "caps_f1": 0.8571428571428571,
+          "shape_f1": 0.0,
+          "container_jaccard": null
+        },
+        "doodles": {
+          "gold": 1,
+          "f1": 0.0,
+          "read_as_text": 0
+        }
+      },
+      "errors": [
+        "misread transition: 'Transition' -> 'Frankhor'",
+        "misread curiosity: 'curiosity' -> 'Lauriotity'",
+        "misread core: 'core' -> 'Ocore'",
+        "misread peripheral: 'peripheral units' -> 'perpueral units'",
+        "underline peripheral 'peripheral units': gold=True pred=False",
+        "misread idea: 'the idea of transitions' -> 'travishon'",
+        "underline idea 'the idea of transitions': gold=True pred=False",
+        "missed text transdisc 'transdisciplinarity'",
+        "missed text grounded 'stay grounded.'",
+        "misread mindset: 'mindset of posture.' -> 'mindset of partue.'",
+        "underline mindset 'mindset of posture.': gold=True pred=False",
+        "missed text eu 'Looking into EU.'",
+        "misread phds_design: 'PhDs in Design' -> 'PhDS in Desig'",
+        "underline phds_design 'PhDs in Design': gold=True pred=False",
+        "misread add_luis: 'Add Luis Garcia' -> 'Add.? Luis Garcia PhDs \u043d\u0430'",
+        "underline add_luis 'Add Luis Garcia': gold=True pred=False",
+        "missed text phds_hci 'PhDs in HCI'",
+        "misread thread: 'a connecting thread.' -> 'connechn wread'",
+        "underline thread 'a connecting thread.': gold=True pred=False",
+        "missed text tangible 'tangible'",
+        "missed text intangible 'intangible'",
+        "misread society: 'the way we think about design & society.' -> 'we think about derm e socery'",
+        "underline society 'the way we think about design & society.': gold=True pred=False",
+        "underline framework 'framework.': gold=True pred=False",
+        "misread critique: 'CRITIQUE' -> 'CRITQUE'",
+        "underline critique 'CRITIQUE': gold=True pred=False",
+        "misread tdesign: 'of transition design.' -> 'of trantition'",
+        "underline tdesign 'of transition design.': gold=True pred=False",
+        "misread play: 'PLAY is TRANSITION & TRANSITION is PLAY' -> \"PLAI 'STRANGTION X RANSTON\"",
+        "underline play 'PLAY is TRANSITION & TRANSITION is PLAY': gold=True pred=False",
+        "missed shape core_shape",
+        "missed link transition->core (connector)",
+        "missed link transition->curiosity (hook)",
+        "missed link core_shape->peripheral (flow)",
+        "missed link core_shape->mindset (flow)",
+        "missed link idea->transdisc (flow)",
+        "missed link transdisc->grounded (flow)",
+        "missed link eu->phds_design (flow)",
+        "missed link thread->story (flow)",
+        "missed link story->play (flow)",
+        "missed link tangible->intangible (connector)",
+        "missed link intangible->gaps (flow)",
+        "missed link gaps->framework (flow)",
+        "missed link gaps->critique (flow)",
+        "missed link critique->tdesign (flow)"
+      ]
+    }
+  }
+}

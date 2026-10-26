@@ -1,0 +1,18 @@
+{
+  "page_id": "gold-example",
+  "page_size": [210, 297],
+  "elements": [
+    {"id": "t1", "type": "text", "bbox": [20, 30, 40, 12], "text": "Attention", "underline": true},
+    {"id": "t2", "type": "text", "bbox": [110, 30, 50, 12], "text": "MEMORY", "caps": true},
+    {"id": "t3", "type": "text", "bbox": [25, 60, 45, 9], "text": "limited span"},
+    {"id": "t4", "type": "text", "bbox": [110, 90, 40, 10], "text": "encoding"},
+    {"id": "t5", "type": "text", "bbox": [110, 130, 40, 10], "text": "recall"},
+    {"id": "s1", "type": "shape", "bbox": [100, 80, 70, 70], "contains": ["t4", "t5"]}
+  ],
+  "links": [
+    {"id": "l1", "kind": "flow", "from": "t1", "to": "t2"},
+    {"id": "l2", "kind": "hook", "from": "t3", "to": "t1"},
+    {"id": "l3", "kind": "connector", "from": "t4", "to": "t5", "label": "to"},
+    {"id": "l4", "kind": "flow", "from": "t2", "to": "s1"}
+  ]
+}

@@ -1,0 +1,302 @@
+/* Noteworthy design system: tokens and base rules. Vendored; see SOURCE.md. */
+/* Webfonts (Google Fonts, OFL). Latin subset, variable. */
+@font-face{font-family:'Newsreader';font-style:italic;font-weight:300 700;font-display:swap;src:url('fonts/Newsreader-italic.woff2') format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
+@font-face{font-family:'Newsreader';font-style:normal;font-weight:300 700;font-display:swap;src:url('fonts/Newsreader-normal.woff2') format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
+@font-face{font-family:'Figtree';font-style:italic;font-weight:400 800;font-display:swap;src:url('fonts/Figtree-italic.woff2') format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
+@font-face{font-family:'Figtree';font-style:normal;font-weight:400 800;font-display:swap;src:url('fonts/Figtree-normal.woff2') format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
+@font-face{font-family:'JetBrains Mono';font-style:normal;font-weight:400 700;font-display:swap;src:url('fonts/JetBrainsMono-normal.woff2') format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
+
+/* Noteworthy colour. Monochrome carries the interface: warm paper and a soft black ink.
+   The spectrum is for shapes, illustration and meaning — never for body text except the -ink variants. */
+:root{
+  /* Paper: warm, low-chroma whites */
+  --paper-0:#FFFDF9;
+  --paper-1:#FBF7F0;
+  --paper-2:#F3EEE5;
+  --paper-3:#E8E1D5;
+  /* Ink: warm greys down to a soft black */
+  --ink-200:#DDD7CC;
+  --ink-300:#C6BFB3;
+  --ink-400:#A29C92;
+  --ink-500:#77736B;   /* 4.6:1 on paper-1 */
+  --ink-600:#5A5750;   /* 6.9:1 */
+  --ink-700:#3A3834;
+  --ink-900:#1D1C1A;   /* 16:1 */
+
+  /* Spectrum: base = shape fill, soft = wash behind a shape, ink = text-safe (≥4.5:1 on paper) */
+  --blush:#F7A6CB;   --blush-soft:#FCE6F0;   --blush-ink:#A8356C;
+  --berry:#FF6FB2;   --berry-soft:#FFE1EF;   --berry-ink:#A81D62;
+  --violet:#9C6BCC;  --violet-soft:#EFE5F8;  --violet-ink:#6E3FA0;
+  --sky:#3DB1F5;     --sky-soft:#DFF2FD;     --sky-ink:#0D6A9E;
+  --cobalt:#2063E8;  --cobalt-soft:#E0E9FC;  --cobalt-ink:#1A4FBC;
+  --mint:#20A95C;    --mint-soft:#DDF3E6;    --mint-ink:#147040;
+  --forest:#15533A;  --forest-soft:#DDE9E3;  --forest-ink:#15533A;
+  --tomato:#FF4D21;  --tomato-soft:#FFE3DA;  --tomato-ink:#B8310E;
+  --tangerine:#FF8B1F; --tangerine-soft:#FFEBD7; --tangerine-ink:#A65100;
+  --sun:#FFC91C;     --sun-soft:#FFF4CC;     --sun-ink:#8A6400;
+
+  /* Semantic surfaces */
+  --bg-canvas:var(--paper-1);
+  --bg-surface:var(--paper-0);
+  --bg-sunken:var(--paper-2);
+  --bg-muted:var(--paper-3);
+  --bg-inverse:var(--ink-900);
+  --bg-scrim:rgba(29,28,26,0.36);
+
+  /* Semantic text */
+  --fg-1:var(--ink-900);
+  --fg-2:var(--ink-600);
+  --fg-3:var(--ink-500);
+  --fg-placeholder:var(--ink-400);
+  --fg-inverse:var(--paper-1);
+
+  /* Lines: ink outlines are part of the look; hairlines separate */
+  --line-strong:var(--ink-900);
+  --line:var(--ink-300);
+  --line-soft:var(--ink-200);
+  --focus-ring:var(--cobalt);
+
+  /* One brand colour drives actions. Swap --brand to rebrand every button, selected chip and nav pill. */
+  --brand:var(--cobalt);
+  --brand-hover:var(--cobalt-ink);
+  --action:var(--brand);
+  --action-hover:var(--brand-hover);
+  --on-action:var(--paper-1);
+  --highlight:var(--sun);
+
+  /* Status */
+  --success:var(--mint);    --success-ink:var(--mint-ink);    --success-soft:var(--mint-soft);
+  --warning:var(--tangerine); --warning-ink:var(--tangerine-ink); --warning-soft:var(--tangerine-soft);
+  --danger:var(--tomato);   --danger-ink:var(--tomato-ink);   --danger-soft:var(--tomato-soft);
+  --info:var(--sky);        --info-ink:var(--sky-ink);        --info-soft:var(--sky-soft);
+
+  /* Note kinds */
+  --kind-brainstorm:var(--tomato);
+  --kind-idea:var(--sun);
+  --kind-reference:var(--sky);
+  --kind-journal:var(--violet);
+  --kind-task:var(--cobalt);
+  --kind-other:var(--ink-400);
+}
+:root[data-theme="dark"]{
+  --bg-canvas:#141312;
+  --bg-surface:#1F1E1C;
+  --bg-sunken:#0E0D0C;
+  --bg-muted:#2A2926;
+  --bg-inverse:var(--paper-1);
+  --bg-scrim:rgba(0,0,0,0.56);
+  --fg-1:#F6F1E9;
+  --fg-2:#BDB7AD;
+  --fg-3:#8F8A81;
+  --fg-placeholder:#625E58;
+  --fg-inverse:var(--ink-900);
+  --line-strong:#F6F1E9;
+  --line:#45423D;
+  --line-soft:#302E2B;
+  --focus-ring:var(--sky);
+  --brand:#2F6CEB;
+  --brand-hover:#4A80F0;
+  --on-action:var(--paper-1);
+  --blush-ink:#F7A6CB; --berry-ink:#FF8FC3; --violet-ink:#C4A2E6; --sky-ink:#7CCBFA;
+  --cobalt-ink:#7FA6F5; --mint-ink:#5BD18D; --forest-ink:#7FC3A3; --tomato-ink:#FF8766;
+  --tangerine-ink:#FFAD5E; --sun-ink:#FFD84F;
+  --blush-soft:#3A2530; --berry-soft:#3D1F2E; --violet-soft:#2C2238; --sky-soft:#152D3B;
+  --cobalt-soft:#18233D; --mint-soft:#15301F; --forest-soft:#172A21; --tomato-soft:#3A1E16;
+  --tangerine-soft:#3A2715; --sun-soft:#3A3113;
+}
+
+/* Serif for voice, sans for controls and numbers. Sizes are fluid: one scale serves phone and desktop. */
+:root{
+  --font-serif:'Newsreader', 'Source Serif 4', Georgia, serif;
+  --font-sans:'Figtree', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --font-mono:'JetBrains Mono', ui-monospace, monospace;
+  --font-display:var(--font-serif);
+  --font-body:var(--font-serif);
+  --font-ui:var(--font-sans);
+  --font-numeral:var(--font-sans);
+
+  --t-numeral:clamp(3.25rem, 2.2rem + 4.2vw, 5.75rem); /* @kind other */
+  --t-display:clamp(2.5rem, 1.9rem + 2.6vw, 4rem); /* @kind other */
+  --t-h1:clamp(1.875rem, 1.55rem + 1.3vw, 2.625rem); /* @kind other */
+  --t-h2:clamp(1.375rem, 1.25rem + 0.55vw, 1.75rem); /* @kind other */
+  --t-h3:1.1875rem;
+  --t-lead:1.1875rem;
+  --t-body:1.0625rem;
+  --t-ui:0.9375rem;
+  --t-sm:0.8125rem;
+  --t-xs:0.6875rem;
+
+  --lh-display:1.02; /* @kind other */
+  --lh-tight:1.15;   /* @kind other */
+  --lh-snug:1.35;    /* @kind other */
+  --lh-body:1.55;    /* @kind other */
+
+  --ls-display:-0.02em; /* @kind other */
+  --ls-numeral:-0.04em; /* @kind other */
+  --ls-ui:0;            /* @kind other */
+  --ls-label:0.08em;    /* @kind other */
+
+  --w-light:300;   /* @kind other */
+  --w-regular:400; /* @kind other */
+  --w-medium:500;  /* @kind other */
+  --w-semibold:600;/* @kind other */
+  --w-bold:700;    /* @kind other */
+}
+
+/* Space in rem so padding grows with text. Layout values are fluid between phone and desktop. */
+:root{
+  --s-1:0.25rem;
+  --s-2:0.5rem;
+  --s-3:0.75rem;
+  --s-4:1rem;
+  --s-5:1.5rem;
+  --s-6:2rem;
+  --s-7:3rem;
+  --s-8:4rem;
+  --s-9:6rem;
+
+  --gutter:clamp(1.25rem, 0.8rem + 2vw, 3rem); /* @kind spacing */
+  --card-pad:clamp(1.125rem, 0.9rem + 0.8vw, 1.75rem);
+  --stack-gap:0.75rem;
+  --section-gap:clamp(2.5rem, 2rem + 2vw, 4.5rem);
+  --measure:36rem;
+  --page-max:72rem;
+  --tap:2.75rem;        /* minimum hit target (44px) */
+
+  --bp-sm:480px;  /* @kind other */
+  --bp-md:768px;  /* @kind other */
+  --bp-lg:1100px; /* @kind other */
+}
+
+/* Shape, line, depth, motion, pattern. */
+:root{
+  /* Radii: nested tiles step down one rung each level (xl outer → lg inner) */
+  --radius-xs:0.375rem;
+  --radius-sm:0.625rem;
+  --radius-md:1rem;
+  --radius-lg:1.5rem;
+  --radius-xl:2rem;
+  --radius-2xl:2.75rem;
+  --radius-pill:9999px;
+
+  /* Line: a single confident ink stroke, sometimes dashed */
+  --stroke:1.5px;
+  --stroke-bold:2px;
+  --stroke-illustration:2.5px;
+  --dash:6px 5px; /* @kind other */
+
+  /* Depth: flat by default. Lift for floating controls, clay for 3D objects. */
+  --shadow-1:0 1px 2px rgba(29,28,26,0.05), 0 4px 14px rgba(29,28,26,0.06);
+  --shadow-2:0 2px 4px rgba(29,28,26,0.06), 0 14px 36px rgba(29,28,26,0.12);
+  --shadow-float:0 6px 18px rgba(29,28,26,0.14), 0 24px 56px rgba(29,28,26,0.14);
+  --shadow-press:0 3px 0 var(--ink-900);
+  --shadow-clay:inset 0 -6px 12px rgba(0,0,0,0.18), inset 0 6px 10px rgba(255,255,255,0.45), 0 10px 22px rgba(29,28,26,0.18);
+
+  /* Motion: soft outs for UI, a spring for playful objects */
+  --ease-out:cubic-bezier(0.22, 1, 0.36, 1);     /* @kind other */
+  --ease-spring:cubic-bezier(0.34, 1.56, 0.64, 1);/* @kind other */
+  --ease-in-out:cubic-bezier(0.65, 0, 0.35, 1);  /* @kind other */
+  --dur-fast:120ms; /* @kind other */
+  --dur:220ms;      /* @kind other */
+  --dur-slow:420ms; /* @kind other */
+
+  /* Pattern fills (use with color: to tint) */
+  --pattern-hatch:repeating-linear-gradient(135deg, currentColor 0 1px, transparent 1px 7px); /* @kind other */
+  --pattern-dots:radial-gradient(currentColor 1px, transparent 1.4px) 0 0 / 9px 9px;           /* @kind other */
+  --pattern-grid:linear-gradient(currentColor 1px, transparent 1px) 0 0 / 24px 24px, linear-gradient(90deg, currentColor 1px, transparent 1px) 0 0 / 24px 24px; /* @kind other */
+
+  --z-nav:100;   /* @kind other */
+  --z-sheet:200; /* @kind other */
+  --z-toast:300; /* @kind other */
+  --z-dialog:400;/* @kind other */
+}
+:root[data-theme="dark"]{
+  --shadow-1:0 1px 2px rgba(0,0,0,0.3), 0 4px 14px rgba(0,0,0,0.3);
+  --shadow-2:0 2px 4px rgba(0,0,0,0.3), 0 14px 36px rgba(0,0,0,0.45);
+  --shadow-float:0 6px 18px rgba(0,0,0,0.4), 0 24px 56px rgba(0,0,0,0.5);
+  --shadow-press:0 3px 0 #000;
+}
+
+/* Noteworthy — rules that are not tokens. Loaded after tokens.css.
+   Colour, spacing, radius, shadow, stroke, z-index, breakpoint and the three font stacks live in tokens.json. */
+
+/* Font roles: aliases of the three stacks in tokens.css */
+:root{
+  --font-display:var(--font-serif);
+  --font-body:var(--font-serif);
+  --font-ui:var(--font-sans);
+  --font-numeral:var(--font-sans);
+
+  /* Type scale. Fluid sizes use clamp(), so one scale serves phone and desktop. */
+  --t-numeral:clamp(3.25rem, 2.2rem + 4.2vw, 5.75rem);
+  --t-display:clamp(2.5rem, 1.9rem + 2.6vw, 4rem);
+  --t-h1:clamp(1.875rem, 1.55rem + 1.3vw, 2.625rem);
+  --t-h2:clamp(1.375rem, 1.25rem + 0.55vw, 1.75rem);
+  --t-h3:1.1875rem;
+  --t-lead:1.1875rem;
+  --t-body:1.0625rem;
+  --t-ui:0.9375rem;
+  --t-sm:0.8125rem;
+  --t-xs:0.6875rem;
+
+  --lh-display:1.02;
+  --lh-tight:1.15;
+  --lh-snug:1.35;
+  --lh-body:1.55;
+
+  --ls-display:-0.02em;
+  --ls-numeral:-0.04em;
+  --ls-ui:0;
+  --ls-label:0.08em;
+
+  --w-light:300;
+  --w-regular:400;
+  --w-medium:500;
+  --w-semibold:600;
+  --w-bold:700;
+
+  /* Layout values that are fluid between phone and desktop */
+  --gutter:clamp(1.25rem, 0.8rem + 2vw, 3rem);
+  --card-pad:clamp(1.125rem, 0.9rem + 0.8vw, 1.75rem);
+  --section-gap:clamp(2.5rem, 2rem + 2vw, 4.5rem);
+
+  /* Dash pattern for dashed ink edges */
+  --dash:6px 5px;
+
+  /* Motion: soft outs for UI, a spring for playful objects */
+  --ease-out:cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring:cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-in-out:cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-fast:120ms;
+  --dur:220ms;
+  --dur-slow:420ms;
+
+  /* Pattern fills (use with color: to tint) */
+  --pattern-hatch:repeating-linear-gradient(135deg, currentColor 0 1px, transparent 1px 7px);
+  --pattern-dots:radial-gradient(currentColor 1px, transparent 1.4px) 0 0 / 9px 9px;
+  --pattern-grid:linear-gradient(currentColor 1px, transparent 1px) 0 0 / 24px 24px, linear-gradient(90deg, currentColor 1px, transparent 1px) 0 0 / 24px 24px;
+}
+
+/* Minimal element defaults + a few utility classes for plain-HTML consumers. */
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg-canvas);color:var(--fg-1);font-family:var(--font-body);font-size:var(--t-body);line-height:var(--lh-body);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+h1,h2,h3,h4{font-family:var(--font-display);font-weight:var(--w-regular);line-height:var(--lh-tight);letter-spacing:var(--ls-display);margin:0;text-wrap:balance}
+p{margin:0;text-wrap:pretty}
+em{font-style:italic}
+a{color:var(--fg-1);text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:0.18em}
+a:hover{color:var(--fg-2)}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--focus-ring);outline-offset:2px}
+.nw-display{font:var(--w-regular) var(--t-display)/var(--lh-display) var(--font-display);letter-spacing:var(--ls-display)}
+.nw-h1{font:var(--w-regular) var(--t-h1)/var(--lh-tight) var(--font-display);letter-spacing:var(--ls-display)}
+.nw-h2{font:var(--w-regular) var(--t-h2)/var(--lh-tight) var(--font-display)}
+.nw-h3{font:var(--w-medium) var(--t-h3)/var(--lh-snug) var(--font-display)}
+.nw-body{font:var(--w-regular) var(--t-body)/var(--lh-body) var(--font-body)}
+.nw-ui{font:var(--w-medium) var(--t-ui)/1.3 var(--font-ui)}
+.nw-label{font:var(--w-semibold) var(--t-xs)/1.2 var(--font-ui);letter-spacing:var(--ls-label);text-transform:uppercase;color:var(--fg-2)}
+.nw-numeral{font:var(--w-medium) var(--t-numeral)/0.9 var(--font-numeral);letter-spacing:var(--ls-numeral);font-variant-numeric:tabular-nums}
+.nw-hatch{background:var(--pattern-hatch)}
+.nw-dots{background:var(--pattern-dots)}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:0.01ms!important;transition-duration:0.01ms!important}}
+
