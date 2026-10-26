@@ -115,7 +115,7 @@ def main(argv=None) -> int:
     ap.add_argument("--vision", default="reports/vision/report.json", help="the Apple Vision scores to set it beside")
     a = ap.parse_args(argv)
 
-    key = os.environ.get("GEMINI_API_KEY")
+    key = gemini.get_key()
     if not key:
         print(GET_A_KEY, file=sys.stderr)
         return 1

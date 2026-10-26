@@ -20,7 +20,7 @@ def run(argv, key="test-key", answer=None):
     out, err = io.StringIO(), io.StringIO()
     with mock.patch.dict(os.environ, env, clear=False), contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
         if not key:
-            os.environ.pop("GEMINI_API_KEY", None)
+            os.environ["GEMINI_API_KEY"] = ""
         with mock.patch.object(gemini, "call_gemini", return_value=json.dumps(answer) if answer is not None else "{}"):
             code = try_gemini.main(argv)
     return code, out.getvalue(), err.getvalue()

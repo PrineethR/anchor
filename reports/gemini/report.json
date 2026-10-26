@@ -1,0 +1,94 @@
+{
+  "when": "2026-10-26 11:34",
+  "summary": {
+    "pages": 1,
+    "text": {
+      "detection_p": 0.9166666666666666,
+      "detection_r": 1.0,
+      "detection_f1": 0.9565217391304348,
+      "cer_matched": 0.02318840579710145,
+      "cer_end_to_end": 0.02318840579710145,
+      "exact_match_rate": 0.7727272727272727
+    },
+    "links": {
+      "top1_p": 0.8666666666666667,
+      "top1_r": 0.9285714285714286,
+      "top1_f1": 0.896551724137931,
+      "top2_recall": 0.9285714285714286,
+      "reversed": 0,
+      "kind_accuracy": 0.9230769230769231,
+      "connector_label_accuracy": 1.0,
+      "mean_conf_correct": 0.9346153846153846,
+      "mean_conf_wrong": 0.9
+    },
+    "emphasis": {
+      "underline_p": 0.9166666666666666,
+      "underline_r": 0.8461538461538461,
+      "underline_f1": 0.8799999999999999,
+      "caps_p": 0.75,
+      "caps_r": 0.75,
+      "caps_f1": 0.75,
+      "shape_f1": 1.0,
+      "container_jaccard": 0.5
+    },
+    "doodles": {
+      "gold": 1,
+      "f1": 0.0,
+      "read_as_text": 0
+    }
+  },
+  "pages": {
+    "page-01": {
+      "summary": {
+        "pages": 1,
+        "text": {
+          "detection_p": 0.9166666666666666,
+          "detection_r": 1.0,
+          "detection_f1": 0.9565217391304348,
+          "cer_matched": 0.02318840579710145,
+          "cer_end_to_end": 0.02318840579710145,
+          "exact_match_rate": 0.7727272727272727
+        },
+        "links": {
+          "top1_p": 0.8666666666666667,
+          "top1_r": 0.9285714285714286,
+          "top1_f1": 0.896551724137931,
+          "top2_recall": 0.9285714285714286,
+          "reversed": 0,
+          "kind_accuracy": 0.9230769230769231,
+          "connector_label_accuracy": 1.0,
+          "mean_conf_correct": 0.9346153846153846,
+          "mean_conf_wrong": 0.9
+        },
+        "emphasis": {
+          "underline_p": 0.9166666666666666,
+          "underline_r": 0.8461538461538461,
+          "underline_f1": 0.8799999999999999,
+          "caps_p": 0.75,
+          "caps_r": 0.75,
+          "caps_f1": 0.75,
+          "shape_f1": 1.0,
+          "container_jaccard": 0.5
+        },
+        "doodles": {
+          "gold": 1,
+          "f1": 0.0,
+          "read_as_text": 0
+        }
+      },
+      "errors": [
+        "misread core: 'core' -> 'Ocore'",
+        "misread mindset: 'mindset of posture.' -> 'mindset of posture'",
+        "misread add_luis: 'Add Luis Garcia' -> 'Luis Garcia'",
+        "underline add_luis 'Add Luis Garcia': gold=True pred=False",
+        "misread society: 'the way we think about design & society.' -> 'the way we think about design & society'",
+        "misread tdesign: 'of transition design.' -> 'of transition design'",
+        "shape core_shape contents: gold=['core', 'doodle_o'] pred=['core']",
+        "missed link transition->core (connector)",
+        "link kind transition->curiosity (hook): pred flow",
+        "spurious link transition->pred:t3 (flow)",
+        "spurious link pred:t3->core_shape (flow)"
+      ]
+    }
+  }
+}

@@ -30,12 +30,31 @@ from pathlib import Path
 
 from harness.schema import load_page, validate
 
-DEFAULT_MODEL = "gemini-2.5-pro"
+DEFAULT_MODEL = "gemini-3.8-flash"
 API = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 GRID = 1000
 
 GEN_CONFIG: dict = {}      # extra generationConfig for a run: {"thinkingConfig": {...}, "mediaResolution": "..."}, set by baselines.try_gemini
 LAST_USAGE: dict = {}      # the token counts Google reported for the most recent request
+
+
+def get_key() -> str | None:
+    if "GEMINI_API_KEY" in os.environ:
+        return os.environ["GEMINI_API_KEY"].strip() or None
+    key_file = Path.home() / ".config" / "anchor" / "gemini.key"
+    if key_file.is_file():
+        k = key_file.read_text().strip()
+        if k:
+            return k
+    dot_env = Path(__file__).resolve().parent.parent / ".env"
+    if dot_env.is_file():
+        for line in dot_env.read_text().splitlines():
+            line = line.strip()
+            if line.startswith("GEMINI_API_KEY="):
+                val = line.split("=", 1)[1].strip().strip('"').strip("'")
+                if val:
+                    return val
+    return None
 
 PROMPT = """\
 This is a photo of a handwritten concept map on a sheet of paper, already
@@ -165,7 +184,7 @@ def post(body: dict, model: str, key: str, retries: int = 3) -> str:
     )
     for attempt in range(retries):
         try:
-            with urllib.request.urlopen(req, timeout=300) as r:
+            with urllib.request.urlopen(req, timeout=600) as r:
                 resp = json.loads(r.read())
             break
         except urllib.error.HTTPError as e:
@@ -280,9 +299,9 @@ def main(argv=None) -> int:
     ap.add_argument("--force", action="store_true", help="re-run pages that already have a prediction")
     a = ap.parse_args(argv)
 
-    key = os.environ.get("GEMINI_API_KEY")
+    key = get_key()
     if not key:
-        print("set GEMINI_API_KEY", file=sys.stderr)
+        print("set GEMINI_API_KEY or save it in ~/.config/anchor/gemini.key", file=sys.stderr)
         return 1
 
     images = sorted(Path(a.pages).glob("*.jpg"))

@@ -125,7 +125,7 @@ def make_flat(data: bytes, flat: Path, crop: bool = True) -> dict:
     reading made while orienting (reused by `read`), or None."""
     page, how = prepare(decode(data), crop)
     turns, raw, sure = 0, None, True
-    if how != "markers" and vision_ready():  # markers already fix orientation
+    if how != "markers" and not gemini_key() and vision_ready():  # Gemini handles rotation natively; only use Vision if no Gemini key
         turns, raw, sure = orient(page)
     cv2.imwrite(str(flat), turn(page, turns), [cv2.IMWRITE_JPEG_QUALITY, 92])
     return {"how": how, "turns": turns, "sure": sure, "ocr": raw}
@@ -136,7 +136,7 @@ def rotate_flat(flat: Path) -> None:
 
 
 def gemini_key() -> str | None:
-    return os.environ.get("GEMINI_API_KEY") or None
+    return gemini.get_key()
 
 
 def gemini_model() -> str:
@@ -153,10 +153,12 @@ def read(flat: Path, page_id: str, profile, *, ocr: dict | None = None, examples
                                       examples=examples)
             page, dropped = gemini.to_page(json.loads(text), page_id)
             return to_pixels(page, flat), "gemini", dropped
-        except (RuntimeError, ValueError, KeyError, OSError) as e:
+        except Exception as e:
+            if not vision_ready():
+                raise EngineError(f"Gemini failed to read the page ({e}).") from e
             notes.append(f"Gemini didn't answer ({e}), so Apple Vision read the page instead.")
-    if not vision_ready():
-        raise EngineError("No reader is set up. Add a GEMINI_API_KEY and restart, or run this on a Mac with the Xcode command line tools.")
+    elif not vision_ready():
+        raise EngineError("No reader is set up. Save your Gemini key in ~/.config/anchor/gemini.key or set GEMINI_API_KEY.")
     try:
         raw = ocr or vision.ocr(flat)
     except (subprocess.CalledProcessError, OSError, ValueError) as e:
