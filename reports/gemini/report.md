@@ -1,4 +1,4 @@
-# Harness report — 2026-10-26 11:34
+# Harness report — 2026-10-26 14:20
 
 Pages: 1
 
@@ -6,12 +6,12 @@ Pages: 1
 
 | metric | value |
 |---|---|
-| detection_p | 0.917 |
+| detection_p | 0.957 |
 | detection_r | 1.000 |
-| detection_f1 | 0.957 |
-| cer_matched | 0.023 |
-| cer_end_to_end | 0.023 |
-| exact_match_rate | 0.773 |
+| detection_f1 | 0.978 |
+| cer_matched | 0.006 |
+| cer_end_to_end | 0.006 |
+| exact_match_rate | 0.909 |
 
 ## Links
 
@@ -22,18 +22,18 @@ Pages: 1
 | top1_f1 | 0.897 |
 | top2_recall | 0.929 |
 | reversed | 0 |
-| kind_accuracy | 0.923 |
+| kind_accuracy | 0.846 |
 | connector_label_accuracy | 1.000 |
-| mean_conf_correct | 0.935 |
-| mean_conf_wrong | 0.900 |
+| mean_conf_correct | 0.923 |
+| mean_conf_wrong | 0.925 |
 
 ## Emphasis
 
 | metric | value |
 |---|---|
-| underline_p | 0.917 |
-| underline_r | 0.846 |
-| underline_f1 | 0.880 |
+| underline_p | 1.000 |
+| underline_r | 0.538 |
+| underline_f1 | 0.700 |
 | caps_p | 0.750 |
 | caps_r | 0.750 |
 | caps_f1 | 0.750 |
@@ -52,19 +52,21 @@ Pages: 1
 
 | page | text F1 | CER | link F1 | top-2 R | underline F1 | caps F1 |
 |---|---|---|---|---|---|---|
-| page-01 | 0.957 | 0.023 | 0.897 | 0.929 | 0.880 | 0.750 |
+| page-01 | 0.978 | 0.006 | 0.897 | 0.929 | 0.700 | 0.750 |
 
 ## Errors
 
 ### page-01
-- misread core: 'core' -> 'Ocore'
-- misread mindset: 'mindset of posture.' -> 'mindset of posture'
-- misread add_luis: 'Add Luis Garcia' -> 'Luis Garcia'
+- underline mindset 'mindset of posture.': gold=True pred=False
+- underline eu 'Looking into EU.': gold=True pred=False
+- misread add_luis: 'Add Luis Garcia' -> 'Add?\nLuis\nGarcia'
 - underline add_luis 'Add Luis Garcia': gold=True pred=False
-- misread society: 'the way we think about design & society.' -> 'the way we think about design & society'
-- misread tdesign: 'of transition design.' -> 'of transition design'
+- underline critique 'CRITIQUE': gold=True pred=False
+- misread tdesign: 'of transition design.' -> 'of transition\ndesign'
+- underline play 'PLAY is TRANSITION & TRANSITION is PLAY': gold=True pred=False
 - shape core_shape contents: gold=['core', 'doodle_o'] pred=['core']
 - missed link transition->core (connector)
-- link kind transition->curiosity (hook): pred flow
-- spurious link transition->pred:t3 (flow)
+- link kind thread->story (flow): pred hook
+- link kind critique->tdesign (flow): pred connector
+- spurious link transition->core_shape (flow)
 - spurious link pred:t3->core_shape (flow)

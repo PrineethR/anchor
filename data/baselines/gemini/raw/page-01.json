@@ -4,206 +4,169 @@
     {
       "id": "t1",
       "type": "text",
-      "box_2d": [46, 43, 76, 114],
-      "text": "Transition",
-      "underline": false,
-      "caps": false
+      "box_2d": [51, 46, 80, 111],
+      "text": "Transition"
     },
     {
       "id": "t2",
       "type": "text",
-      "box_2d": [84, 117, 114, 185],
-      "text": "curiosity",
-      "underline": false,
-      "caps": false
+      "box_2d": [89, 118, 118, 181],
+      "text": "curiosity"
     },
     {
       "id": "t3",
       "type": "text",
-      "box_2d": [209, 53, 238, 107],
+      "box_2d": [212, 53, 237, 102],
       "text": "TRY TO",
-      "underline": false,
       "caps": true
-    },
-    {
-      "id": "s1",
-      "type": "shape",
-      "box_2d": [217, 60, 386, 186],
-      "contains": ["t4"]
     },
     {
       "id": "t4",
       "type": "text",
-      "box_2d": [251, 80, 296, 142],
-      "text": "Ocore",
-      "underline": false,
-      "caps": false
+      "box_2d": [247, 85, 294, 148],
+      "text": "core"
+    },
+    {
+      "id": "s1",
+      "type": "shape",
+      "box_2d": [220, 62, 383, 184],
+      "contains": ["t4"]
     },
     {
       "id": "t5",
       "type": "text",
-      "box_2d": [216, 210, 281, 284],
-      "text": "peripheral units",
-      "underline": true,
-      "caps": false
+      "box_2d": [221, 211, 271, 283],
+      "text": "peripheral\nunits",
+      "underline": true
     },
     {
       "id": "t6",
       "type": "text",
-      "box_2d": [510, 102, 601, 206],
-      "text": "mindset of posture",
-      "underline": true,
-      "caps": false
+      "box_2d": [511, 107, 597, 206],
+      "text": "mindset\nof posture."
     },
     {
       "id": "t7",
       "type": "text",
-      "box_2d": [617, 39, 655, 94],
-      "text": "Add ?",
-      "underline": true,
-      "caps": false
+      "box_2d": [321, 230, 422, 355],
+      "text": "the idea\nof transitions",
+      "underline": true
     },
     {
       "id": "t8",
       "type": "text",
-      "box_2d": [650, 71, 726, 118],
-      "text": "Luis Garcia",
-      "underline": false,
-      "caps": false
+      "box_2d": [229, 401, 286, 524],
+      "text": "transdisciplinarity"
     },
     {
       "id": "t9",
       "type": "text",
-      "box_2d": [757, 63, 834, 116],
-      "text": "PhDs in HCI",
-      "underline": false,
-      "caps": false
+      "box_2d": [321, 449, 391, 574],
+      "text": "stay grounded."
     },
     {
       "id": "t10",
       "type": "text",
-      "box_2d": [323, 226, 417, 357],
-      "text": "the idea of transitions",
-      "underline": true,
-      "caps": false
+      "box_2d": [471, 331, 524, 415],
+      "text": "looking into\nEU."
     },
     {
       "id": "t11",
       "type": "text",
-      "box_2d": [228, 403, 282, 525],
-      "text": "transdisciplinarity",
-      "underline": false,
-      "caps": false
+      "box_2d": [570, 381, 628, 431],
+      "text": "PhDs in\nDesign",
+      "underline": true
     },
     {
       "id": "t12",
       "type": "text",
-      "box_2d": [320, 450, 385, 570],
-      "text": "stay grounded.",
-      "underline": false,
-      "caps": false
+      "box_2d": [669, 418, 730, 526],
+      "text": "a connecting\nthread.",
+      "underline": true
     },
     {
       "id": "t13",
       "type": "text",
-      "box_2d": [473, 330, 524, 415],
-      "text": "looking into EU.",
-      "underline": true,
-      "caps": false
+      "box_2d": [594, 582, 637, 717],
+      "text": "telling a story"
     },
     {
       "id": "t14",
       "type": "text",
-      "box_2d": [566, 365, 631, 431],
-      "text": "PhDs in Design",
-      "underline": true,
-      "caps": false
+      "box_2d": [64, 526, 95, 582],
+      "text": "tangible"
     },
     {
       "id": "t15",
       "type": "text",
-      "box_2d": [670, 416, 739, 529],
-      "text": "a connecting thread.",
-      "underline": true,
-      "caps": false
+      "box_2d": [89, 666, 118, 740],
+      "text": "intangible"
     },
     {
       "id": "t16",
       "type": "text",
-      "box_2d": [598, 591, 636, 720],
-      "text": "telling a story",
-      "underline": false,
-      "caps": false
+      "box_2d": [34, 804, 155, 942],
+      "text": "the way\nwe think\nabout\ndesign\n& society.",
+      "underline": true
     },
     {
       "id": "t17",
       "type": "text",
-      "box_2d": [67, 524, 106, 584],
-      "text": "tangible",
-      "underline": false,
-      "caps": false
+      "box_2d": [287, 730, 313, 764],
+      "text": "GAPS",
+      "caps": true
     },
     {
       "id": "t18",
       "type": "text",
-      "box_2d": [86, 665, 119, 743],
-      "text": "intangible",
-      "underline": false,
-      "caps": false
+      "box_2d": [273, 807, 303, 888],
+      "text": "framework.",
+      "underline": true
     },
     {
       "id": "t19",
       "type": "text",
-      "box_2d": [37, 801, 160, 939],
-      "text": "the way we think about design & society",
-      "underline": true,
-      "caps": false
+      "box_2d": [384, 701, 419, 772],
+      "text": "CRITIQUE",
+      "caps": true
     },
     {
       "id": "t20",
       "type": "text",
-      "box_2d": [289, 715, 314, 756],
-      "text": "GAPS",
-      "underline": false,
-      "caps": true
+      "box_2d": [374, 832, 430, 935],
+      "text": "of transition\ndesign",
+      "underline": true
     },
     {
       "id": "t21",
       "type": "text",
-      "box_2d": [273, 806, 308, 886],
-      "text": "framework.",
-      "underline": true,
-      "caps": false
+      "box_2d": [720, 735, 905, 871],
+      "text": "PLAY\nis\nTRANSITION\n&\nTRANSITION\nis\nPLAY",
+      "caps": true,
+      "contains": ["d1"]
+    },
+    {
+      "id": "d1",
+      "type": "doodle",
+      "box_2d": [862, 799, 874, 843]
     },
     {
       "id": "t22",
       "type": "text",
-      "box_2d": [386, 700, 417, 770],
-      "text": "CRITIQUE",
-      "underline": true,
-      "caps": true
+      "box_2d": [621, 38, 718, 120],
+      "text": "Add?\nLuis\nGarcia"
     },
     {
       "id": "t23",
       "type": "text",
-      "box_2d": [370, 832, 427, 938],
-      "text": "of transition design",
-      "underline": true,
-      "caps": false
-    },
-    {
-      "id": "t24",
-      "type": "text",
-      "box_2d": [720, 734, 908, 869],
-      "text": "PLAY is TRANSITION & TRANSITION is PLAY",
-      "underline": true,
-      "caps": true
+      "box_2d": [759, 66, 831, 114],
+      "text": "PhDs\nin\nHCI"
     }
   ],
   "links": [
     {
       "id": "l1",
-      "kind": "flow",
+      "kind": "hook",
       "from": "t1",
       "to": "t2",
       "confidence": 0.95
@@ -212,8 +175,8 @@
       "id": "l2",
       "kind": "flow",
       "from": "t1",
-      "to": "t3",
-      "confidence": 0.9
+      "to": "s1",
+      "confidence": 0.95
     },
     {
       "id": "l3",
@@ -239,73 +202,75 @@
     {
       "id": "l6",
       "kind": "flow",
-      "from": "t10",
-      "to": "t11",
+      "from": "t7",
+      "to": "t8",
       "confidence": 0.95
     },
     {
       "id": "l7",
       "kind": "flow",
-      "from": "t11",
-      "to": "t12",
+      "from": "t8",
+      "to": "t9",
       "confidence": 0.95
     },
     {
       "id": "l8",
       "kind": "flow",
-      "from": "t13",
-      "to": "t14",
+      "from": "t10",
+      "to": "t11",
       "confidence": 0.95
     },
     {
       "id": "l9",
-      "kind": "flow",
-      "from": "t15",
-      "to": "t16",
-      "confidence": 0.95
+      "kind": "connector",
+      "from": "t14",
+      "to": "t15",
+      "label": "to",
+      "confidence": 0.9
     },
     {
       "id": "l10",
       "kind": "flow",
-      "from": "t16",
-      "to": "t24",
+      "from": "t15",
+      "to": "t17",
+      "to_alt": "t16",
       "confidence": 0.8
     },
     {
       "id": "l11",
-      "kind": "connector",
+      "kind": "flow",
       "from": "t17",
       "to": "t18",
-      "label": "to",
       "confidence": 0.95
     },
     {
       "id": "l12",
       "kind": "flow",
-      "from": "t18",
-      "to": "t20",
-      "confidence": 0.9
+      "from": "t17",
+      "to": "t19",
+      "confidence": 0.95
     },
     {
       "id": "l13",
-      "kind": "flow",
-      "from": "t20",
-      "to": "t21",
+      "kind": "connector",
+      "from": "t19",
+      "to": "t20",
+      "label": "of",
       "confidence": 0.95
     },
     {
       "id": "l14",
-      "kind": "flow",
-      "from": "t20",
-      "to": "t22",
-      "confidence": 0.95
+      "kind": "hook",
+      "from": "t12",
+      "to": "t13",
+      "confidence": 0.9
     },
     {
       "id": "l15",
       "kind": "flow",
-      "from": "t22",
-      "to": "t23",
-      "confidence": 0.95
+      "from": "t13",
+      "to": "t21",
+      "confidence": 0.85
     }
   ]
 }

@@ -30,7 +30,8 @@ from pathlib import Path
 
 from harness.schema import load_page, validate
 
-DEFAULT_MODEL = "gemini-3.8-flash"
+DEFAULT_MODEL = "gemini-3.6-flash"
+FALLBACK_MODELS = ["gemini-3.6-flash", "gemini-3.8-flash", "gemini-flash-latest"]
 API = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 GRID = 1000
 
@@ -172,7 +173,18 @@ def build_body(image: Path, prompt: str = PROMPT, examples=()) -> dict:
 
 def call_gemini(image: Path, model: str, key: str, retries: int = 3, prompt: str = PROMPT, examples=()) -> str:
     """Return the model's JSON text for one page image."""
-    return post(build_body(image, prompt, examples), model, key, retries)
+    models_to_try = [model] + [m for m in FALLBACK_MODELS if m != model]
+    last_err = None
+    body = build_body(image, prompt, examples)
+    for m in models_to_try:
+        try:
+            return post(body, m, key, retries)
+        except Exception as e:
+            last_err = e
+            if any(code in str(e) for code in ("503", "404", "500", "429")):
+                continue
+            raise
+    raise last_err or RuntimeError("Gemini failed on all candidate models")
 
 
 def post(body: dict, model: str, key: str, retries: int = 3) -> str:
