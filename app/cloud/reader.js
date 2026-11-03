@@ -173,6 +173,24 @@ export function rupees(usd) {
   return r < 0.1 ? 'under ₹0.1' : `about ₹${r < 10 ? r.toFixed(1) : Math.round(r)}`;
 }
 
+/** The key and the model choice for a request, or the error that says to add a key. */
+export function setup(what = 'read pages') {
+  const s = settings();
+  if (!s.key) throw new ReaderError(`Add a Gemini key under You to ${what} here.`, 'nokey');
+  return { key: s.key, preset: PRESETS[s.preset] };
+}
+
+/** Send `body` to the first model of the choice this key can use. A model the key cannot use falls through to the next; any other failure stops. */
+export async function callModels(body, preset, key) {
+  let last;
+  for (const model of preset.models) {
+    try { return { resp: await send(model, body, key), model }; }
+    catch (e) { if (e.kind !== 'model') throw e; last = e; }
+  }
+  throw last;
+}
+export const answerText = resp => (resp.candidates?.[0]?.content?.parts || []).map(p => p.text || '').join('');
+
 // ---- one photo in, one page out -------------------------------------------------------------------------------------------------
 /**
  * Read a photo (JPEG bytes, w x h pixels, already upright as the browser holds it).
@@ -180,17 +198,10 @@ export function rupees(usd) {
  * (turned if Gemini said it was sideways: then `rotation` says by how much, and the caller turns the stored photo too).
  */
 export async function readPhoto(jpeg, w, h, { hints = '', pageId = 'page' } = {}) {
-  const s = settings();
-  if (!s.key) throw new ReaderError('Add a Gemini key in Settings to read pages here.', 'nokey');
+  const { key, preset } = setup();
   if (!cfg.prompt || !cfg.schema) throw new ReaderError('The reader is not set up (reader.json is missing).', 'bad');
-  const preset = PRESETS[s.preset], body = buildRequest(b64(jpeg), hints, preset);
-  let resp, used, last;
-  for (const model of preset.models) {
-    try { resp = await send(model, body, s.key); used = model; break; }
-    catch (e) { if (e.kind !== 'model') throw e; last = e; }   // not available to this key: try the next one
-  }
-  if (!resp) throw last;
-  const text = (resp.candidates?.[0]?.content?.parts || []).map(p => p.text || '').join('');
+  const { resp, model: used } = await callModels(buildRequest(b64(jpeg), hints, preset), preset, key);
+  const text = answerText(resp);
   let raw;
   try { raw = JSON.parse(text); } catch { throw new ReaderError("Gemini's answer wasn't readable. Try again.", 'bad'); }
   const rotation = [90, 180, 270].includes(Number(raw.page_rotation)) ? Number(raw.page_rotation) : 0;

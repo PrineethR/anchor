@@ -208,6 +208,21 @@ details.fixes summary { cursor: pointer; }
 details.fixes ul { margin: var(--s-2) 0 0; padding: 0; list-style: none; font: var(--w-regular) var(--t-ui)/1.5 var(--font-body); }
 details.fixes s { color: var(--fg-3); }
 .sense { margin-top: var(--s-6); }
+.insight { margin: var(--s-4) 0 var(--s-5); padding: var(--s-5); }
+.insight h3 { font: var(--w-medium) var(--t-h3)/var(--lh-snug) var(--font-display); letter-spacing: 0; margin: 0 0 var(--s-3); }
+.insight h3 em { font-style: italic; }
+.insight h4 { font: var(--w-medium) 1.0625rem/var(--lh-snug) var(--font-display); letter-spacing: 0; margin: var(--s-5) 0 var(--s-2); }
+.insight-summary { font: var(--w-regular) var(--t-lead)/var(--lh-body) var(--font-body); margin: 0; }
+.insight ul { list-style: none; margin: 0; padding: 0; }
+.insight li { padding: .3rem .4rem; margin: 0 -.4rem; border-radius: 6px; font: var(--w-regular) var(--t-body)/var(--lh-snug) var(--font-body); transition: background-color var(--dur) var(--ease-out); }
+.insight li[data-ids]:hover { background: var(--bg-surface); }
+.insight .todos li { display: flex; gap: .6rem; align-items: flex-start; }
+.insight .todos .cb { margin: .2em 0 0; width: 1.1rem; height: 1.1rem; }
+.insight .sugg li { display: flex; gap: .5rem; align-items: flex-start; }
+.insight .sugg .nw-icon { flex: none; margin-top: .3em; color: var(--fg-3); }
+.insight-sub { margin: var(--s-3) 0 var(--s-1); font: var(--w-medium) var(--t-sm)/1.2 var(--font-ui); color: var(--fg-3); }
+.insight-note { display: flex; gap: var(--s-2); align-items: center; flex-wrap: wrap; margin: 0 0 var(--s-3); font: var(--w-medium) var(--t-sm)/1.3 var(--font-ui); color: var(--fg-2); }
+.insight-foot { display: flex; gap: var(--s-2); flex-wrap: wrap; align-items: center; margin-top: var(--s-5); }
 
 .savebar { position: fixed; left: 50%; translate: -50% 0; bottom: calc(96px + env(safe-area-inset-bottom)); z-index: var(--z-toast); }
 @media (min-width: 900px) { .savebar { bottom: var(--s-6); } }
@@ -960,6 +975,28 @@ function installBlock() {
   return `${P.state.canInstall ? '<button class="nw-btn nw-btn--primary" id="install" type="button"><span>Install on this device</span></button>' : ''}
     ${how ? `<p class="hint">${esc(how)}</p>` : ''}<p class="hint">${esc(kept)}</p>`;
 }
+/** What Gemini made of the page: a summary, how the ideas fit, what is open, next steps. Only on the website (the Mac app has its own summary button). */
+function insightCard(n) {
+  if (n.insight === undefined) return '';
+  const ins = n.insight;
+  if (!ins) {
+    return `<section class="nw-card nw-card--sunken insight" aria-label="Make sense of this page"><h3>Make <em>sense</em></h3>
+      <p class="hint" style="margin-top:0">A short summary, how your ideas fit together, what is still open, and ideas for what to do next. Each point is tied to words on your page.</p>
+      ${n.can_insight ? `<button class="nw-btn nw-btn--primary" id="insightMake" type="button">${ico('sparkles', { size: 18, cls: 'nw-btn__icon' })}<span>Make sense of this page</span></button>`
+        : `<a class="nw-btn nw-btn--secondary" href="#/profile">Add a Gemini key to use this</a>`}</section>`;
+  }
+  const points = items => `<ul>${items.map(p => `<li data-ids="${esc(p.ids.join(' '))}">${esc(p.text)}</li>`).join('')}</ul>`;
+  const written = ins.written.length ? `<p class="insight-sub">You wrote</p><ul class="todos">${ins.written.map(p => `<li data-ids="${esc(p.ids.join(' '))}"><span class="cb" aria-hidden="true"></span><span>${esc(p.text)}</span></li>`).join('')}</ul>` : '';
+  const suggested = ins.suggested.length ? `<p class="insight-sub">Suggested</p><ul class="sugg">${ins.suggested.map(p => `<li data-ids="${esc(p.ids.join(' '))}">${ico('sparkles', { size: 14 })}<span>${esc(p.text)}</span></li>`).join('')}</ul>` : '';
+  return `<section class="nw-card nw-card--sunken insight" aria-label="What the page says, made sense of"><h3>Making <em>sense</em></h3>
+    ${ins.stale ? `<p class="insight-note">${ico('triangle-alert', { size: 16 })}<span>You changed the page since this was written.</span><button class="nw-btn nw-btn--secondary nw-btn--sm" id="insightAgain" type="button">Make sense again</button></p>` : ''}
+    <p class="insight-summary">${esc(ins.summary)}</p>
+    ${ins.fits.length ? `<h4>How it fits together</h4>${points(ins.fits)}` : ''}
+    ${ins.questions.length ? `<h4>Still open</h4>${points(ins.questions)}` : ''}
+    ${written || suggested ? `<h4>Next steps</h4>${written}${suggested}` : ''}
+    <div class="insight-foot">${ins.stale ? '' : `<button class="nw-btn nw-btn--secondary nw-btn--sm" id="insightAgain" type="button">Make sense again</button>`}<button class="nw-btn nw-btn--ghost nw-btn--sm" id="insightRemove" type="button">Remove</button></div>
+    <p class="hint">Written by Gemini from the words on your page${ins.cost ? `, ${esc(ins.cost)}` : ''}. Hover a point to see what it comes from. Suggestions are ideas, not things you wrote.</p></section>`;
+}
 function renderSense() {
   const n = S.note, v = S.preview || n, nar = n.narration;
   const summary = nar && nar.summary ? nar.summary : v.sense.summary;
@@ -967,6 +1004,7 @@ function renderSense() {
     <p class="summary">${esc(summary)}</p>
     <p class="nw-label">${esc(label(S.dirty ? 'Showing your unsaved edits' : '', nar && nar.stale ? 'Summary is from before your last edit' : ''))}</p>
     ${n.can_narrate ? `<button class="nw-btn nw-btn--secondary nw-btn--sm" id="narrate" type="button">${ico('sparkles', { size: 16, cls: 'nw-btn__icon' })}<span>${nar ? 'Write it again' : 'Write a summary'}</span></button>` : ''}
+    ${insightCard(n)}
     <div class="check-row"><label class="nw-tog" style="--nw-on:var(--action)"><input type="checkbox" id="confirmed" ${n.confirmed ? 'checked' : ''}><span class="nw-cb">${ico('check', { size: 16, sw: 3 })}</span><span>I've checked this page</span></label></div>
     <p class="hint" style="margin-top:0">Checking it teaches the profile every word on the page. Words you fix are always learned.</p>
     ${n.changes && n.changes.length ? `<details class="fixes"><summary>Your profile changed ${plural(n.changes.length, 'reading')}</summary><ul>${n.changes.map(c => `<li><s>${esc(c.from)}</s> ${ico('arrow-right', { size: 12, sw: 2 })} ${esc(c.to)}</li>`).join('')}</ul></details>` : ''}
@@ -976,6 +1014,15 @@ function renderSense() {
     try { const upd = await send('PUT', `/notes/${n.id}`, { confirmed: c.checked }); S.note.confirmed = upd.confirmed; toast(c.checked ? 'Learned from this page.' : 'No longer learning from the words you left alone.', c.checked ? { mood: 'joyful' } : { icon: 'info' }); }
     catch (e) { oops(e); c.checked = !c.checked; }
   };
+  const make = async () => {
+    if (S.dirty) { toast('Save your edits first, then make sense of the page.', { icon: 'info' }); return; }
+    const upd = await guarded('Making sense of the page…', 'Gemini reads your words, not the photo.', () => send('POST', `/notes/${n.id}/insight`, {}));
+    if (upd) { S.note = upd; renderSense(); toast('Done. Hover a point to see where on the page it comes from.', { mood: 'joyful' }); }
+  };
+  const mk = $('#insightMake'), again = $('#insightAgain'), drop = $('#insightRemove');
+  if (mk) mk.onclick = make;
+  if (again) again.onclick = make;
+  if (drop) drop.onclick = async () => { const upd = await guarded('Removing…', '', () => send('DELETE', `/notes/${n.id}/insight`)); if (upd) { S.note = upd; renderSense(); } };
   const nb = $('#narrate');
   if (nb) nb.onclick = async () => { const upd = await guarded('Asking Gemini for a summary…', '', () => send('POST', `/notes/${n.id}/narrate`)); if (upd) { S.note = upd; renderSense(); } };
   const col = $('#senseCol');

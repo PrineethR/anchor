@@ -154,6 +154,9 @@ class Worker:
                "threads": sense["stats"]["threads"], "loose": sense["stats"]["loose"], "actions": len(sense["actions"]),
                "thumb": make_thumb(flat), "photoRev": int(ex.get("photoRev") or 0) + (0 if ex.get("flatSha") == sha else 1), "flatSha": sha,
                "rev": rev, "learnedRev": rev, "request": None, "doneRequest": (request or {}).get("id") or ex.get("doneRequest"), "deleted": False}
+        for k in ("insightJson", "insightKey", "insightAt", "insightModel", "insightUsd"):   # what Make sense wrote on the site is not the Mac's to drop
+            if k in ex:
+                doc[k] = ex[k]
         doc["_flat"] = (flat, w, h)
         return doc, flat
 

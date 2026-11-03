@@ -128,6 +128,19 @@ Checks, from cheapest to most real: `tests/test_cloud_build.py` (the manifest ag
 and `tests/e2e/pwa.mjs`, which drives real Chromium and WebKit (Safari's engine) against the emulators: registers the worker in a folder, reloads with the network cut and finds the app and its data, writes offline and watches it arrive,
 announces and accepts an update, receives a shared photo, and asks Chrome whether it is installable. See the header of that file for the five commands to run it.
 
+## Making sense of a page
+
+On a page you have read, **Make sense of this page** asks Gemini for a short summary, how the ideas fit together (your arrows put into words), what is still open, and suggested next steps.
+It uses the same key and the same Better / Cheaper choice as reading, and costs roughly ₹0.2 to ₹0.6 a page (the card shows the real figure). It runs only when you press it.
+
+- **What Gemini sees.** The typed outline of the page with an id on every idea (`insight.js` builds it from what `meaning.js` found), never the photo. It is told to use only what is on the page.
+- **Tied to your words.** Every point has to name the ideas it comes from. An id that is not on the page is dropped, a point left with none is dropped, and hovering a point lights up those words on the page.
+- **Yours and the model's stay apart.** The to-dos you wrote are listed from the page itself under *You wrote*; the model's own ideas are under *Suggested*, and a suggestion that repeats a to-do you wrote is dropped.
+- **Out of date.** The insight is kept with the page along with a fingerprint of the words it was written from. Change a word and it says so, and *Make sense again* refreshes it. *Remove* takes it off.
+- **Not built:** the same for a notebook, and a view across pages ("what keeps coming up this week"). The Mac does not make or need these; it only keeps them when it republishes a page.
+
+Tested in node against a pretend Google (`tests/test_cloud_insight.py`) and in real Chromium and WebKit (`tests/e2e/insight.mjs`). Not yet run against real Gemini: how useful the writing is depends on your pages, and the instructions in `insight.js` are what to tune.
+
 ## When two devices disagree
 
 * **Notebooks** move forward one revision at a time (a security rule enforces it). If a device was offline while you changed the same notebook elsewhere, its save is refused when it

@@ -21,6 +21,7 @@ import { makeSense } from './meaning.js';
 import { blank, cleanItems, cleanLinks, COLORS, importPage, thumbSvg, threadOf, toPage } from './notebook.js';
 import { preparePhoto, turnPhoto } from './photo.js';
 import * as R from './reader.js';
+import * as I from './insight.js';
 import { configure, senseHtml, toHtml, toMarkdown } from './render.js';
 
 const MAC_FRESH_MS = 180_000;                       // the Mac says it is awake every minute
@@ -161,7 +162,7 @@ export function createBackend({ db, user, onSignOut }) {
     const page = JSON.parse(d.pageJson);
     const sense = makeSense(page, cues());
     const lay = layout(page, threadOf(sense));
-    return { ...base, page, layout: lay, sense, sense_html: senseHtml(sense, true), clean_html: renderHtml(lay) };
+    return { ...base, page, layout: lay, sense, sense_html: senseHtml(sense, true), clean_html: renderHtml(lay), can_insight: R.hasKey(), insight: insightOf(d, sense) };
   }
   const pageDoc = async id => { await whenReady('pages'); const d = S.pages.get(id); if (!d || d.deleted) throw notFound(); return d; };
 
@@ -425,6 +426,40 @@ export function createBackend({ db, user, onSignOut }) {
     return profileView();
   }
 
+  // ---- making sense of a page: summary, how it fits, what is open, what next ----------------------------------------------------
+  /** The page's stored insight as the screen shows it, or null. It is marked stale once the page's words are no longer what it was written from. */
+  function insightOf(d, sense) {
+    if (!d.insightJson) return null;
+    try {
+      const v = I.view(JSON.parse(d.insightJson), sense, d.insightKey);
+      return { ...v, cost: d.insightUsd != null ? R.rupees(d.insightUsd) : '', model: d.insightModel || '', at: d.insightAt || '' };
+    } catch { return null; }
+  }
+  const sensing = new Set();
+  async function makeSenseOfNote(id) {
+    const d = await pageDoc(id);
+    if (!d.pageJson) throw new ApiError("That page hasn't been read yet.");
+    if (sensing.has(id)) throw new ApiError('Already making sense of this page.');
+    sensing.add(id);
+    try {
+      let out;
+      try { out = await I.makeSenseOf(makeSense(JSON.parse(d.pageJson), cues()), hints()); }
+      catch (e) { throw e instanceof R.ReaderError ? new ApiError(e.message, e.kind === 'nokey' ? 400 : 502) : e; }
+      // not touching updatedAt: the Mac has no use for this, so it need not wake up for it
+      const patch = { insightJson: JSON.stringify(out.insight), insightKey: out.key, insightAt: nowIso(), insightModel: out.model, insightUsd: out.usd };
+      S.pages.set(id, { ...d, ...patch }); emit('pages');
+      await soft(F.updateDoc(P.page(id), patch));
+      return noteView({ ...d, ...patch });
+    } finally { sensing.delete(id); }
+  }
+  async function forgetInsight(id) {
+    const d = await pageDoc(id);
+    const patch = { insightJson: null, insightKey: null, insightAt: null, insightModel: null, insightUsd: null };
+    S.pages.set(id, { ...d, ...patch }); emit('pages');
+    await soft(F.updateDoc(P.page(id), patch));
+    return noteView({ ...d, ...patch });
+  }
+
   // ---- reading a page with Gemini, here -------------------------------------------------------------------------------------
   const hints = () => { try { return JSON.parse(S.profile?.viewJson || '{}').hints || ''; } catch { return ''; } };   // how you write, as the Mac last worked it out
   const monthOf = iso => String(iso || '').slice(0, 7);
@@ -584,6 +619,8 @@ export function createBackend({ db, user, onSignOut }) {
           if (method === 'DELETE') return await deleteNote(id);
         }
         if (rest[0] === 'sense' && method === 'POST') return await previewNote(id, json().page);
+        if (rest[0] === 'insight' && method === 'POST') return await makeSenseOfNote(id);
+        if (rest[0] === 'insight' && method === 'DELETE') return await forgetInsight(id);
         if (rest[0] === 'reread' && method === 'POST') return await rereadNote(id, json());
         if (rest[0] === 'narrate') throw new ApiError('Summaries need a Gemini key on your Mac, and the website does not use one.');
         if ((rest[0] === 'share.html' || rest[0] === 'share.md') && method === 'GET') return await exportNote(id, rest[0].slice(6), q.get('photo') === '1');

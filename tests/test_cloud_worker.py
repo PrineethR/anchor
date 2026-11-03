@@ -83,6 +83,19 @@ class WorkerTests(unittest.TestCase):
         self.assertEqual(self.fs.get(self.p("state", "mac"))["version"], 1)
         self.assertIn("seen", self.fs.get(self.p("state", "mac")))
 
+    def test_what_make_sense_wrote_on_the_site_survives_the_mac_republishing_the_page(self):
+        pid = self.add_from_phone()
+        self.w.cycle()
+        self.fs.update(self.p("pages", pid), {"insightJson": '{"summary": "x"}', "insightKey": "abc:1", "insightUsd": 0.003, "insightModel": "m", "insightAt": "2026-11-03T10:00:00"})
+        page = json.loads(self.fs.get(self.p("pages", pid))["pageJson"])
+        page["elements"][0]["text"] = "Edited on the Mac"      # a change made here, which the Mac sends up, replacing the whole document
+        d = self.home / pid
+        (d / "page.json").write_text(json.dumps(page))
+        self.w.cycle()
+        doc = self.fs.get(self.p("pages", pid))
+        self.assertIn("Edited on the Mac", doc["pageJson"])
+        self.assertEqual((doc["insightJson"], doc["insightKey"], doc["insightUsd"]), ('{"summary": "x"}', "abc:1", 0.003))
+
     def test_a_title_you_typed_while_it_waited_is_kept(self):
         pid = self.add_from_phone(title="My own name")
         self.w.cycle()
