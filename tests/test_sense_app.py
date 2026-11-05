@@ -27,7 +27,7 @@ def fake_make_flat(data, flat, crop=True):
 
 
 def fake_read(flat, page_id, profile, ocr=None, examples=()):
-    return copy.deepcopy(RAW), "vision", []
+    return copy.deepcopy(RAW), "gemini", []
 
 
 class AppTest(unittest.TestCase):
@@ -38,7 +38,7 @@ class AppTest(unittest.TestCase):
             p = mock.patch.object(engine, name, fn)
             p.start()
             self.addCleanup(p.stop)
-        for name, val in (("vision_ready", True), ("gemini_key", None)):
+        for name, val in (("vision_ready", False), ("gemini_key", None)):
             p = mock.patch.object(engine, name, return_value=val)
             p.start()
             self.addCleanup(p.stop)
@@ -94,7 +94,7 @@ class CreateAndViewTests(AppTest):
         texts = {e["id"]: e["text"] for e in note["page"]["elements"]}
         self.assertEqual(texts["t3"], "of taestan")  # your seeded shorthand
         self.assertEqual(note["changes"], [{"id": "t3", "from": "7 taestan", "to": "of taestan", "why": "shorthand"}])
-        self.assertEqual((note["source"], note["how"], note["confirmed"]), ("vision", "edges", False))
+        self.assertEqual((note["source"], note["how"], note["confirmed"]), ("gemini", "edges", False))
         self.assertTrue(note["sense_html"] and note["clean_html"] and note["layout"]["boxes"])
         d = self.home / note["id"]
         self.assertEqual(sorted(p.name for p in d.iterdir()),
@@ -277,7 +277,7 @@ class DeleteAndProfileTests(AppTest):
         _, prof, _ = self.call("GET", "/api/profile")
         self.assertEqual((prof["sources"]["notes"], prof["stats"]["pages"]), (0, 0))
         _, again, _ = self.call("GET", "/api/status")
-        self.assertEqual((again["gemini"], again["vision"]), (False, True))
+        self.assertEqual((again["gemini"], again["vision"]), (False, False))
 
 
 class StaticTests(AppTest):

@@ -25,7 +25,7 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
 from harness.schema import parse_page, validate
-from . import canvas, engine, firestore_sync, meaning, narrate, notebooks, share, theme
+from . import board, canvas, engine, firestore_sync, meaning, narrate, notebooks, share, theme
 from .profile import Profile, style_stats
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -309,7 +309,7 @@ class Store:
         return count
 
     def status(self) -> dict:
-        st = {"gemini": bool(engine.gemini_key()), "vision": engine.vision_ready(),
+        st = {"gemini": bool(engine.gemini_key()), "vision": False,
               "labeled": len(list(self.labeled.glob("*.json"))) if self.labeled.exists() else 0}
         if self.sync:
             st["sync"] = self.sync.status()
@@ -334,6 +334,7 @@ def render_ui(cloud: bool = False) -> str:
 class Handler(BaseHTTPRequestHandler):
     store: Store
     nbs: "notebooks.Notebooks | None" = None   # None when run with --no-notebooks
+    board: "board.BoardApp | None" = None      # the Board section: its own package, handed its own requests
     loopback_only = True
 
     def log_message(self, fmt, *args):
@@ -469,9 +470,13 @@ class Handler(BaseHTTPRequestHandler):
             return self._static("/".join(parts[1:]))
         if parts and parts[0] == "web" and method == "GET" and len(parts) == 2:
             return self._web(parts[1])
+        if parts[:2] == ["web", "board"] and method == "GET" and len(parts) == 3 and self.board:
+            return self.board.static(self, parts[2])
         if not parts or parts[0] != "api":
             raise NotFound(self.path)
         r = parts[1:]
+        if r[:1] == ["board"] and self.board:
+            return self.board.handle(self, method, r[1:], q)
         if r == ["sync"]:
             if method == "GET":
                 return self._json(s.sync.status() if s.sync else {"enabled": False})
@@ -479,7 +484,7 @@ class Handler(BaseHTTPRequestHandler):
                 count = s.sync_all()
                 return self._json({"scheduled": count, "status": s.sync.status() if s.sync else {"enabled": False}})
         if r == ["status"] and method == "GET":
-            return self._json({**s.status(), "notebooks": self.nbs is not None})
+            return self._json({**s.status(), "notebooks": self.nbs is not None, "board": self.board is not None})
         if r and r[0] == "notebooks":
             return self._notebooks(method, r[1:], q)
         if r == ["profile"]:
@@ -527,6 +532,7 @@ def make_server(home: Path, host: str = "127.0.0.1", port: int = 8765, labeled: 
     handler = type("BoundHandler", (Handler,), {
         "store": store,
         "nbs": notebooks.Notebooks(store) if with_notebooks else None,
+        "board": board.BoardApp(home),
         "loopback_only": host in ("127.0.0.1", "localhost", "::1"),
     })
     return ThreadingHTTPServer((host, port), handler)
@@ -548,7 +554,7 @@ def main(argv=None) -> int:
     labeled = ROOT / "data" / "no-labeled" if a.no_labeled else None
     server = make_server(Path(a.home), a.host, a.port, labeled, with_notebooks=not a.no_notebooks, with_sync=a.sync)
     st = server.RequestHandlerClass.store.status()
-    reader = "Gemini" if st["gemini"] else "Apple Vision (text only, no arrows)" if st["vision"] else "NONE: set GEMINI_API_KEY"
+    reader = "Gemini" if st["gemini"] else "NONE: set GEMINI_API_KEY"
     sync_desc = f"  ·  sync to Firestore ({firestore_sync.DEFAULT_PROJECT}) ON" if a.sync else ""
     print(f"Make sense on http://{a.host}:{a.port}  ·  notes in {a.home}  ·  reading with {reader}{sync_desc}", flush=True)
     if a.cloud:

@@ -83,7 +83,7 @@ def prepare(img: np.ndarray, crop: bool = True) -> tuple[np.ndarray, str]:
 
 
 def vision_ready() -> bool:
-    return sys.platform == "darwin" and (vision.BINARY.exists() or shutil.which("swiftc") is not None)
+    return False
 
 
 def _chars(raw: dict) -> int:
@@ -125,8 +125,6 @@ def make_flat(data: bytes, flat: Path, crop: bool = True) -> dict:
     reading made while orienting (reused by `read`), or None."""
     page, how = prepare(decode(data), crop)
     turns, raw, sure = 0, None, True
-    if how != "markers" and not gemini_key() and vision_ready():  # Gemini handles rotation natively; only use Vision if no Gemini key
-        turns, raw, sure = orient(page)
     cv2.imwrite(str(flat), turn(page, turns), [cv2.IMWRITE_JPEG_QUALITY, 92])
     return {"how": how, "turns": turns, "sure": sure, "ocr": raw}
 
@@ -144,27 +142,17 @@ def gemini_model() -> str:
 
 
 def read(flat: Path, page_id: str, profile, *, ocr: dict | None = None, examples=()) -> tuple[dict, str, list[str]]:
-    """(page in the harness schema, "gemini" | "vision", notes to show the user)."""
-    notes: list[str] = []
+    """(page in the harness schema, "gemini", notes to show the user). Strictly uses Gemini."""
     key = gemini_key()
-    if key:
-        try:
-            text = gemini.call_gemini(flat, gemini_model(), key, prompt=gemini.PROMPT + "\n" + profile.hints(),
-                                      examples=examples)
-            page, dropped = gemini.to_page(json.loads(text), page_id)
-            return to_pixels(page, flat), "gemini", dropped
-        except Exception as e:
-            if not vision_ready():
-                raise EngineError(f"Gemini failed to read the page ({e}).") from e
-            notes.append(f"Gemini didn't answer ({e}), so Apple Vision read the page instead.")
-    elif not vision_ready():
+    if not key:
         raise EngineError("No reader is set up. Save your Gemini key in ~/.config/anchor/gemini.key or set GEMINI_API_KEY.")
     try:
-        raw = ocr or vision.ocr(flat)
-    except (subprocess.CalledProcessError, OSError, ValueError) as e:
-        raise EngineError(f"Apple Vision couldn't read the page ({e}).") from None
-    groups = vision.merge_stacked(vision.split_arrows(raw["lines"]))
-    return vision.to_page(groups, page_id, (raw["width"], raw["height"])), "vision", notes
+        text = gemini.call_gemini(flat, gemini_model(), key, prompt=gemini.PROMPT + "\n" + profile.hints(),
+                                  examples=examples)
+        page, dropped = gemini.to_page(json.loads(text), page_id)
+        return to_pixels(page, flat), "gemini", dropped
+    except Exception as e:
+        raise EngineError(f"Gemini failed to read the page ({e}).") from e
 
 
 def to_pixels(page: dict, flat: Path) -> dict:

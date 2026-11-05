@@ -155,7 +155,7 @@ export function createBackend({ db, user, onSignOut }) {
   // ---- pages -----------------------------------------------------------------------------------------------------------
   function noteView(d) {
     const base = { id: d.id, title: d.title || 'Untitled page', created: d.created, how: d.how || '', turns: d.turns || 0, sure: d.sure !== false, crop: d.crop !== false,
-      source: d.source || 'vision', confirmed: !!d.confirmed, edited: !!d.edited, engine_notes: d.engineNotes || [], changes: d.changes || [],
+      source: d.source || 'gemini', confirmed: !!d.confirmed, edited: !!d.edited, engine_notes: d.engineNotes || [], changes: d.changes || [],
       narration: null, can_narrate: false, status: d.status || 'ready', error: d.error || null, rev: d.rev || 0, unsent: unsent.has(d.id),
       read_cost: d.readUsd != null ? R.rupees(d.readUsd) : '', read_model: d.readModel || null, can_read_again: R.hasKey(), reading_here: inflight.has(d.id) };
     if (!d.pageJson) return { ...base, page: null, layout: null, sense: null, sense_html: '', clean_html: '' };
@@ -168,7 +168,7 @@ export function createBackend({ db, user, onSignOut }) {
 
   async function listNotes() {
     await whenReady('pages');
-    return live(S.pages).sort((a, b) => (a.id < b.id ? 1 : -1)).map(d => ({ id: d.id, title: d.title || 'Untitled page', created: d.created, source: d.source || 'vision',
+    return live(S.pages).sort((a, b) => (a.id < b.id ? 1 : -1)).map(d => ({ id: d.id, title: d.title || 'Untitled page', created: d.created, source: d.source || 'gemini',
       confirmed: !!d.confirmed, threads: d.threads || 0, loose: d.loose || 0, actions: d.actions || 0, status: d.status || 'ready', error: d.error || null, unsent: unsent.has(d.id) }));
   }
 

@@ -157,7 +157,7 @@ class StoreSyncIntegrationTest(unittest.TestCase):
             "page_id": "x", "page_size": [200, 100], "links": [],
             "elements": [{"id": "t1", "type": "text", "bbox": [10, 10, 40, 10], "text": "Testing"}]
         }
-        p2 = mock.patch.object(engine, "read", lambda flat, page_id, prof, ocr=None, examples=(): (raw_page, "vision", []))
+        p2 = mock.patch.object(engine, "read", lambda flat, page_id, prof, ocr=None, examples=(): (raw_page, "gemini", []))
         p2.start()
         self.addCleanup(p2.stop)
 

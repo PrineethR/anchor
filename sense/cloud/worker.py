@@ -147,7 +147,7 @@ class Worker:
         ex = existing or {}
         rev = int(ex.get("rev") or 0) + 1
         doc = {"id": pid, "title": (ex.get("title") or meta.get("title") or sense["title"]) if request else meta.get("title") or sense["title"],
-               "created": meta["created"], "status": "ready", "error": None, "source": meta.get("source", "vision"), "how": meta.get("how", ""),
+               "created": meta["created"], "status": "ready", "error": None, "source": meta.get("source", "gemini"), "how": meta.get("how", ""),
                "turns": int(meta.get("turns", 0)), "sure": bool(meta.get("sure", True)), "crop": bool(meta.get("crop", True)),
                "confirmed": bool(meta.get("confirmed")), "edited": bool(meta.get("edited")), "engineNotes": list(meta.get("engine_notes") or []),
                "changes": [{"from": c["from"], "to": c["to"]} for c in meta.get("changes") or []], "pageJson": json.dumps(page),
@@ -210,7 +210,7 @@ class Worker:
         for name in ("engine.json", "shown.json", "page.json"):
             (d / name).write_text(json.dumps(page, indent=1, ensure_ascii=False))
         meta = {"id": pid, "created": doc["created"], "how": doc.get("how", ""), "turns": doc.get("turns", 0), "sure": doc.get("sure", True),
-                "crop": doc.get("crop", True), "title": doc.get("title", ""), "source": doc.get("source") or "vision",
+                "crop": doc.get("crop", True), "title": doc.get("title", ""), "source": doc.get("source") or "gemini",
                 "engine_notes": doc.get("engineNotes", []), "changes": doc.get("changes", []), "confirmed": bool(doc.get("confirmed")),
                 "edited": bool(doc.get("edited")), "narration": None}
         (d / "meta.json").write_text(json.dumps(meta, indent=1, ensure_ascii=False))

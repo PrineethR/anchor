@@ -7,14 +7,14 @@ The same app, at an address you can open on your phone anywhere, behind a Google
 ┌───────────────────┐   sign in    ┌──────────────────────────────┐  every ~15 s   ┌───────────────────────────┐
 │ the website        │ ───────────▶ │ Firebase Auth (Google)       │                │ sense.cloud.worker        │
 │  ui.html + canvas  │              │ Firestore  users/{you}/…     │ ◀───────────── │  reads queued photos with │
-│  + the reading     │ ◀──────────▶ │ Hosting    (the static site) │ ──────────────▶│  Apple Vision + profile,  │
+│  + the reading     │ ◀──────────▶ │ Hosting    (the static site) │ ──────────────▶│  Gemini + profile,        │
 │  engine in JS      │  live data   └──────────────────────────────┘  results, edits│  learns from your edits   │
 └───────────────────┘                                                                └───────────────────────────┘
 ```
 
 **Two ways a photo gets read.** With a Gemini key saved on a device (*You → How pages are read*), that device reads the page itself, straight from the photo,
 and the Mac is not involved: it works from anywhere with the Mac off, and it finds arrows and underlines. Without a key, a new photo waits as "Waiting for your Mac"
-and the Mac reads it with Apple Vision when it is on (words only; you draw the arrows). Opening everything already read, editing words, writing in notebooks,
+and the Mac reads it with Gemini when it is on. Opening everything already read, editing words, writing in notebooks,
 exporting and changing the profile never need the Mac.
 
 ## Reading with Gemini on the device
