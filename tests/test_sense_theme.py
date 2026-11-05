@@ -107,6 +107,24 @@ class NothingInventedTests(unittest.TestCase):
         self.assertEqual(re.findall(r"\brgba?\(", js), [])
         self.assertNotRegex(js, r"font-family\s*:\s*['\"]?(Georgia|Helvetica|Arial)")
 
+    def test_the_boards_files_have_no_raw_colours(self):
+        """palette.js is the one file in the Board that names colours (a sticky's colour is the user's data, saved in board.json);
+        templates.json is data too. Everything else goes through the tokens."""
+        def raw(text, js):
+            text = re.sub(r"/\*.*?\*/", "", text, flags=re.S)
+            if js:
+                text = re.sub(r"(?<![:\\\w])//[^\n]*", "", text)    # a line comment, not the // of http://
+            return re.findall(r"#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{3,4})(?![\w-])|\b(?:rgba?|hsla?)\(", text)
+        # the check sees what it is looking for, and skips what it should
+        self.assertEqual(raw("a { color: #fff }", False), ["#fff"])
+        self.assertEqual(raw("x = 'rgba(0,0,0,.5)' + '#12345678' + \"hsl(1,2%,3%)\"", True), ["rgba(", "#12345678", "hsl("])
+        self.assertEqual(raw("/* #fff rgb(0,0,0) */ // #000\nu = 'http://x.test/' // rgb(1,2,3)\nq = '#add-row, #abcde'", True), [])
+        board = ROOT / "web" / "board"
+        files = [board / "board.css"] + sorted(p for p in board.glob("*.js") if p.name != "palette.js")
+        self.assertGreater(len(files), 20)
+        for f in files:
+            self.assertEqual(raw(f.read_text(), f.suffix == ".js"), [], f.name)
+
     def test_no_font_names_outside_the_tokens(self):
         for name, css in self.css_of().items():
             for decl in re.findall(r"font(?:-family)?\s*:[^;}]*", css):

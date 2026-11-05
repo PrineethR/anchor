@@ -132,25 +132,19 @@ class ReadTests(unittest.TestCase):
         self.assertEqual(len(page["links"]), 1)
         self.assertIn("About this writer", call.call_args.kwargs["prompt"])  # the profile rides along
 
-    def test_gemini_failure_falls_back_to_local_ocr_and_says_so(self):
-        raw = {"width": 200, "height": 100, "lines": [{"text": "hello", "confidence": 1, "box": [10, 10, 50, 12]}]}
-        with self.env("k"), mock.patch.object(gemini, "call_gemini", side_effect=RuntimeError("HTTP 429")), \
-                mock.patch.object(engine, "vision_ready", return_value=True), mock.patch.object(vision, "ocr", return_value=raw):
-            page, source, notes = engine.read(self.flat, "p", Profile())
-        self.assertEqual(source, "vision")
-        self.assertEqual(page["elements"][0]["text"], "hello")
-        self.assertIn("HTTP 429", notes[0])
+    def test_gemini_failure_raises_engine_error_without_falling_back(self):
+        with self.env("k"), mock.patch.object(gemini, "call_gemini", side_effect=RuntimeError("HTTP 429")):
+            with self.assertRaisesRegex(engine.EngineError, "Gemini failed to read the page"):
+                engine.read(self.flat, "p", Profile())
 
-    def test_without_a_key_it_uses_the_orientation_pass_reading_instead_of_reading_twice(self):
-        raw = {"width": 200, "height": 100, "lines": [{"text": "hi", "confidence": 1, "box": [0, 0, 20, 10]}]}
+    def test_without_a_key_it_raises_engine_error(self):
         with self.env(None), mock.patch.dict(os.environ, {"GEMINI_API_KEY": ""}), \
-                mock.patch.object(engine, "vision_ready", return_value=True), \
-                mock.patch.object(vision, "ocr", side_effect=AssertionError("read twice")):
-            page, source, _ = engine.read(self.flat, "p", Profile(), ocr=raw)
-        self.assertEqual((source, page["elements"][0]["text"]), ("vision", "hi"))
+                mock.patch.object(gemini, "get_key", return_value=None):
+            with self.assertRaisesRegex(engine.EngineError, "No reader is set up"):
+                engine.read(self.flat, "p", Profile())
 
     def test_no_reader_at_all_is_an_error_that_says_what_to_do(self):
-        with mock.patch.dict(os.environ, {"GEMINI_API_KEY": ""}), mock.patch.object(engine, "vision_ready", return_value=False):
+        with mock.patch.dict(os.environ, {"GEMINI_API_KEY": ""}), mock.patch.object(gemini, "get_key", return_value=None):
             with self.assertRaisesRegex(engine.EngineError, "GEMINI_API_KEY"):
                 engine.read(self.flat, "p", Profile())
 

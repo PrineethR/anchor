@@ -23,6 +23,8 @@ sense/              the make-sense app: a photo of a notebook page -> notes you 
 sense/static/       the Noteworthy design system, vendored: tokens, fonts, components, ds.js (see its SOURCE.md)
 sense/notebooks.py  notebooks: the model, storage, import and export of an infinite canvas (an added section)
 sense/web/          the canvas editor: canvas.js and canvas.css, served only when notebooks are on
+sense/board/        the Board: a local canvas for jamming (storage, API). An added section, removable whole
+sense/web/board/    the Board's editor: plain ES modules, no build step
 baselines/gemini.py Gemini-only baseline: whole flattened page -> one prediction JSON
 baselines/vision.py local OCR baseline: Apple Vision, text elements only (no links)
 examples/           a worked gold file showing every field
@@ -34,6 +36,7 @@ templates/          the printable sheet
 captures/           capture sessions
 notes/              the make-sense app's library: one folder per page, plus profile.json (yours; not for sharing)
 notes/notebooks/    one folder per notebook: notebook.json and the photos you put on it
+notes/boards/       one folder per board: board.json and assets/ (the pictures and files on it); .trash/ and .templates/ beside them
 ```
 
 ## Capturing
@@ -95,6 +98,23 @@ Limits worth knowing:
 - The retyped page draws straight arrows, so one can cross a neighbouring word.
 
 Tests that touch the app need OpenCV: `.venv/bin/python -m unittest`.
+
+## Board: jam on an endless canvas
+
+A local Miro for your own jamming, in the same app: open **Boards** in the rail (run `.venv/bin/python -m sense.app` as usual). Everything stays on this Mac except link cards (they fetch the page you pasted) and Ask Claude (it sends the board text to Claude). It is local only; the website build does not show it.
+
+- **Move around.** Two fingers pan, pinch zooms (2% to 400%), hold Space and drag to pan, `⇧1` fits the board, `⇧2` fits the selection, `⇧0` is 100%. There is a minimap, a dot grid, and snapping with alignment guides (hold `⌘` to drag freely).
+- **Build from the keyboard.** `N` sticky, `T` text, `S` shapes (then `1`-`8` or a letter), `L` connector, `P` pen (again: highlighter), `E` eraser, `F` frame, `M` mind map, `I` picture or file, `V` select. With something selected, `Tab` makes a connected copy to the right, `⇧Tab` below, `⌥` + arrows any way. Double-click empty canvas for a sticky. `?` lists every shortcut. Stickies use Miro's colours and shrink their text to fit.
+- **Edit like a board.** Marquee or shift-click to select; `⌘G` groups, `⇧⌘L` locks, `⌘]` / `⌘[` order, `⌘C` `⌘X` `⌘V` `⌘D` copy, cut, paste (also into another board, pictures included), `⌥`-drag duplicates, `⌘Z` / `⇧⌘Z` undo and redo. Connectors (straight, elbow, curved; arrowheads; labels) stay glued to the objects they join.
+- **Pictures, files, links.** Paste, drop or pick them. Pictures and files are kept in the board's `assets/` folder under their own names; a file card opens with a double-click (programs and web pages are revealed in Finder instead of run). Paste a URL and this Mac fetches its title, icon and preview; if it can't, you get a plain URL card.
+- **Frames, mind maps, templates.** A frame carries what is in it; the frames list (top bar) jumps to one and exports it as PNG. In a mind map `Tab` adds a child, `Enter` a sibling, the tree tidies itself, `C` folds a branch. Six templates ship (brainstorm, 2x2 matrix, kanban, user journey map, empathy map, retro); *Save selection as template* adds your own.
+- **Boards.** The list creates, renames, duplicates, searches by title and deletes to a trash you can restore from. `⌘F` searches inside a board. Changes are written within a second, and a second tab on the same board follows along. Export PNG, SVG or PDF for the whole board, a selection or one frame, or the whole board as JSON (and import it from the list). PNG and PDF are pictures (the PDF is one page holding a high-resolution image); SVG keeps shapes and words.
+- **Ask Claude.** The button at the top right sends the board (or just the selection) and your request to Claude Code in headless mode, on the login already on this Mac, so it uses your subscription and not an API key (`ANTHROPIC_API_KEY` and similar are removed from its environment). Sign in once with `claude auth login`. Pick a model (Haiku is the default: fastest and cheapest; Sonnet, Opus), use a starter (Expand, Challenge, Summarize, Group) or write your own request. It only adds notes and arrows, placed in empty space as one undo step; it never edits or deletes yours. Each run is logged to `notes/boards/.usage.jsonl` and the panel shows today's and the last 7 days' tokens. Code: `sense/board/ask.py`, `sense/web/board/ask.js`; `ANCHOR_CLAUDE_BIN` points at a different `claude` (the browser tests use `tests/fake_claude.py`).
+- **Data you own.** A board is `notes/boards/<id>/board.json` (plain JSON; the format is described at the top of `sense/board/schema.py`) plus `assets/`. Nothing else is needed to read it.
+
+Tests: `.venv/bin/python -m unittest` (server side, `tests/test_board*.py`) and, in a real browser, `node tests/e2e/board.mjs` (sections `core perf draw files frames export sync ask`) and `node tests/e2e/svg.mjs`; set up Playwright as described in `sense/cloud/README.md`.
+
+Not built: rotation, align and distribute, comments, voting, timers, presentation mode, accounts or sync, mobile layout.
 
 ## Labeling a page
 

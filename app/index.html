@@ -150,9 +150,18 @@ body { overscroll-behavior-y: none; }
 .notice p { margin: 0; flex: 1 1 14rem; font: var(--w-regular) var(--t-ui)/1.4 var(--font-ui); color: var(--fg-1); }
 .notice .nw-icon { flex: none; }
 .frame { background: var(--bg-surface); border-radius: var(--radius-2xl); padding: 8px; box-shadow: var(--shadow-1); }
-.viewer { position: relative; border-radius: var(--radius-xl); overflow: hidden; background: var(--bg-sunken); touch-action: pan-y; }
-.viewer .ph { display: block; width: 100%; height: auto; }
-.viewer .typed { position: absolute; inset: 0; background: var(--bg-surface); }
+.viewer-topbar { display: flex; align-items: center; justify-content: space-between; gap: var(--s-2); margin-bottom: var(--s-2); padding: 2px var(--s-2); flex-wrap: wrap; }
+.viewer-zoom-cluster { display: inline-flex; align-items: center; gap: 2px; padding: 2px; border-radius: var(--radius-pill); background: var(--bg-surface); border: var(--stroke) solid var(--line-strong); box-shadow: var(--shadow-1); }
+.viewer-zoom-cluster .viewer-pct { min-width: 3.2rem; text-align: center; font: var(--w-medium) var(--t-sm)/1 var(--font-ui); color: var(--fg-2); border: 0; background: transparent; cursor: pointer; border-radius: var(--radius-pill); height: 32px; padding: 0 4px; }
+.viewer-zoom-cluster .viewer-pct:hover { background: var(--bg-sunken); color: var(--fg-1); }
+.viewer-zoom-cluster .nw-ib--sm { --d: 32px; }
+.viewer-hint { font: var(--w-regular) var(--t-xs)/1 var(--font-ui); color: var(--fg-3); }
+.viewer { position: relative; border-radius: var(--radius-xl); overflow: hidden; background: var(--bg-sunken); touch-action: none; user-select: none; -webkit-user-select: none; }
+.viewer.zoomed { cursor: grab; }
+.viewer.panning { cursor: grabbing !important; }
+.viewer-stage { position: relative; width: 100%; transform-origin: 0 0; will-change: transform; }
+.viewer .ph { display: block; width: 100%; height: auto; pointer-events: none; -webkit-user-drag: none; }
+.viewer .typed { position: absolute; inset: 0; background: var(--bg-surface); pointer-events: none; }
 .viewer .typed .canvas { width: 100%; height: 100%; min-width: 0; border-radius: 0; }
 .viewer .rule { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: var(--fg-1); pointer-events: none; }
 .viewer .rule::after { content: ""; position: absolute; top: 50%; left: 50%; width: 28px; height: 28px; margin: -14px 0 0 -14px; border-radius: 50%;
@@ -176,7 +185,28 @@ body { overscroll-behavior-y: none; }
 .ovl .wire { stroke: var(--action); stroke-width: 2; fill: none; vector-effect: non-scaling-stroke; stroke-linecap: round; }
 .ovl .wire.hook { stroke-dasharray: 5 4; }
 .ovl .ah { fill: var(--action); }
-.wipe-row { margin: var(--s-3) var(--s-2) 0; }
+
+.note-float { position: absolute; z-index: 10; display: flex; flex-direction: column; gap: var(--s-2); min-width: 280px; max-width: min(340px, calc(100% - 16px));
+  padding: var(--s-3); border-radius: var(--radius-lg); background: var(--bg-surface); border: var(--stroke) solid var(--line-strong); box-shadow: var(--shadow-float); }
+.note-float-head { display: flex; align-items: center; justify-content: space-between; gap: var(--s-2); }
+.note-float-title { font: var(--w-semibold) var(--t-sm)/1.2 var(--font-ui); color: var(--fg-1); display: inline-flex; align-items: center; gap: .4em; }
+.note-float-nav { display: inline-flex; align-items: center; gap: 2px; }
+.note-float-nav .nw-ib--sm { --d: 28px; }
+.note-float-input-box { display: flex; align-items: center; }
+.note-float-input { width: 100%; min-height: 38px; padding: 0 var(--s-3); border: var(--stroke) solid var(--line); border-radius: var(--radius-md); background: var(--bg-sunken);
+  font: var(--w-regular) var(--t-body)/1.2 var(--font-body); color: var(--fg-1); }
+.note-float-input:focus { outline: 0; background: var(--bg-surface); border-color: var(--action); box-shadow: 0 0 0 3px color-mix(in srgb, var(--action) 20%, transparent); }
+.note-float-actions { display: flex; align-items: center; gap: var(--s-2); flex-wrap: wrap; }
+.note-float-actions .nw-chip { height: 30px; padding: 0 .8em; font-size: var(--t-xs); }
+.note-float-actions .sel { min-height: 30px; padding: 0 var(--s-2); font-size: var(--t-xs); }
+.note-float-links { font: var(--w-regular) var(--t-xs)/1.3 var(--font-ui); color: var(--fg-3); border-top: 1px solid var(--line-soft); padding-top: var(--s-2); display: flex; align-items: center; justify-content: space-between; }
+
+.wipe-controls { display: flex; flex-direction: column; gap: var(--s-2); margin: var(--s-3) var(--s-1) 0; }
+.wipe-bar { display: flex; align-items: center; justify-content: space-between; gap: var(--s-2); flex-wrap: wrap; }
+.wipe-bar .nw-seg { flex: none; }
+.wipe-bar .nw-seg__opt { height: 32px; padding: 0 .9em; font-size: var(--t-sm); gap: .4em; }
+.wipe-level-badge { font: var(--w-semibold) var(--t-xs)/1 var(--font-ui); color: var(--fg-2); padding: 4px 10px; border-radius: var(--radius-pill); background: var(--bg-sunken); }
+.wipe-slider-wrap { position: relative; display: flex; align-items: center; }
 .wipe { appearance: none; -webkit-appearance: none; width: 100%; height: 32px; background: transparent; margin: 0; cursor: pointer; }
 .wipe::-webkit-slider-runnable-track { height: 8px; border-radius: var(--radius-pill); background: var(--bg-muted); border: var(--stroke) solid var(--line-strong); }
 .wipe::-moz-range-track { height: 8px; border-radius: var(--radius-pill); background: var(--bg-muted); border: var(--stroke) solid var(--line-strong); box-sizing: border-box; }
@@ -460,12 +490,11 @@ function readerLine(st) {
   if (st.cloud && st.reader?.here) return `This device reads new pages with Gemini, so your Mac can be off. It finds arrows and underlines. ${st.reader.month.pages ? `${plural(st.reader.month.pages, 'page')} this month, ${window.MS_BACKEND.reader.rupees(st.reader.month.usd)}.` : ''}`.trim();
   if (st.cloud) {
     const m = st.cloud.mac, w = st.cloud.waiting;
-    return m.online ? 'Your Mac is on. It reads each page you add, usually within a minute. Add a Gemini key under You and this device reads them itself, arrows included.'
-      : `Your Mac is off${m.seen ? `, last on ${ago(m.seen)}` : ''}. A page you add waits here and gets read when the Mac is back on. You can still open everything already read, and write in your notebooks.${w ? ` ${plural(w, 'page')} waiting.` : ''}`;
+    return m.online ? 'Your Mac is on. It reads each page you add with Gemini. Add a Gemini key under You and this device reads them itself, arrows included.'
+      : `Your Mac is off${m.seen ? `, last on ${ago(m.seen)}` : ''}. A page you add waits here and gets read by Gemini when the Mac is back on. You can still open everything already read, and write in your notebooks.${w ? ` ${plural(w, 'page')} waiting.` : ''}`;
   }
   return st.gemini ? 'Reading with Gemini. It finds arrows and underlines as well as words.'
-    : st.vision ? 'Reading with Apple Vision on this Mac. It finds words but not arrows yet, so you draw those in.'
-    : 'No reader is set up. Add a GEMINI_API_KEY and restart, or run this on a Mac.';
+    : 'No reader is set up. Add a GEMINI_API_KEY or save your key in ~/.config/anchor/gemini.key.';
 }
 const badge = (color, icon, text) => `<span class="nw-badge nw-badge--soft" style="--nw-s:var(--${color}-soft);--nw-i:var(--${color}-ink)">${icon ? ico(icon, { size: 14, sw: 2 }) : ''}${text}</span>`;
 function pageRows(notes) {
@@ -548,7 +577,7 @@ async function sharedPage() {
 }
 
 /* ---------- note ---------- */
-const S = { note: null, draft: null, dirty: false, mode: 'view', tool: 'select', sel: null, from: null, wipe: 50, preview: null, photoV: 0 };
+const S = { note: null, draft: null, dirty: false, mode: 'view', tool: 'select', sel: null, from: null, wipe: 50, preview: null, photoV: 0, zoom: 1, pan: { x: 0, y: 0 }, spaceDown: false };
 const HOW = { gemini: 'Read straight from the photo by Gemini.', markers: 'Found the page by its corner markers.', edges: 'Cut the page out of the photo by its edges.', 'whole photo': 'Using the whole photo.' };
 window.MS = { S, renderAll: () => renderAll(), busy, toast };
 
@@ -557,7 +586,7 @@ async function notePage(id) {
   const note = await guarded('Opening your page…', '', () => api('/notes/' + id));
   if (!note) { location.hash = '#/'; return; }
   if (note.status && note.status !== 'ready') return waitingPage(note);
-  Object.assign(S, { note, draft: clone(note.page), dirty: false, mode: 'view', tool: 'select', sel: null, from: null, wipe: 50, preview: null, photoV: Date.now() });
+  Object.assign(S, { note, draft: clone(note.page), dirty: false, mode: 'view', tool: 'select', sel: null, from: null, wipe: 50, preview: null, photoV: Date.now(), zoom: 1, pan: { x: 0, y: 0 }, spaceDown: false });
   app.innerHTML = `
     <div class="note-head">
       <a class="nw-ib nw-ib--soft" href="#/" aria-label="Back to your pages" title="Back to your pages">${ico('arrow-left', { size: 22, sw: 1.6 })}</a>
@@ -575,9 +604,36 @@ async function notePage(id) {
       <section class="page-col" aria-label="The page">
         <div class="modebar" id="modebar"></div>
         <div id="notices"></div>
-        <div class="frame"><div class="viewer" id="viewer"></div></div>
-        <div class="wipe-row">
-          <input type="range" class="wipe" id="wipe" min="0" max="100" value="50" aria-label="Slide between your handwriting and the retyped page">
+        <div class="frame">
+          <div class="viewer-topbar">
+            <div class="viewer-zoom-cluster">
+              <button class="nw-ib nw-ib--ghost nw-ib--sm" id="zout" type="button" aria-label="Zoom out" title="Zoom out (-)">${ico('minus', { size: 16 })}</button>
+              <button class="viewer-pct" id="zpct" type="button" title="Reset zoom to 100% (0)">100%</button>
+              <button class="nw-ib nw-ib--ghost nw-ib--sm" id="zin" type="button" aria-label="Zoom in" title="Zoom in (+)">${ico('plus', { size: 16 })}</button>
+              <button class="nw-ib nw-ib--ghost nw-ib--sm" id="zfit" type="button" aria-label="Fit to width" title="Fit to width (0)">${ico('maximize', { size: 16 })}</button>
+            </div>
+            <span class="viewer-hint" id="viewerHint">Pinch or scroll to zoom · Drag to pan</span>
+          </div>
+          <div class="viewer" id="viewer">
+            <div class="viewer-stage" id="viewerStage">
+              <img class="ph" alt="Photo of your handwritten page" ${photoAttr(note.id, S.photoV)}>
+              <div class="typed" id="typed"></div><div class="rule" id="rule"></div><div class="ovl" id="ovl"></div>
+            </div>
+            <div class="note-float" id="noteFloat" hidden></div>
+          </div>
+        </div>
+        <div class="wipe-controls">
+          <div class="wipe-bar">
+            <div class="nw-seg nw-seg--sm" role="radiogroup" aria-label="View preset">
+              <button type="button" role="radio" class="nw-seg__opt" data-preset="photo" aria-checked="false" title="Handwriting photo only (1)">${ico('image', { size: 16 })}<span>Photo</span></button>
+              <button type="button" role="radio" class="nw-seg__opt" data-preset="split" aria-checked="true" title="Split handwriting and retyped (2)">${ico('sliders-horizontal', { size: 16 })}<span>Split</span></button>
+              <button type="button" role="radio" class="nw-seg__opt" data-preset="retyped" aria-checked="false" title="Retyped page only (3)">${ico('type', { size: 16 })}<span>Retyped</span></button>
+            </div>
+            <span class="wipe-level-badge" id="wipeBadge">50% Photo · 50% Retyped</span>
+          </div>
+          <div class="wipe-slider-wrap">
+            <input type="range" class="wipe" id="wipe" min="0" max="100" value="50" aria-label="Slide between your handwriting and the retyped page">
+          </div>
           <div class="wipe-labels"><span>Handwriting</span><span>Retyped</span></div>
         </div>
         <div class="page-tools" id="pageTools"></div>
@@ -600,6 +656,15 @@ async function notePage(id) {
   $('#toNb').hidden = !HAS_NB;
   $('#toNb').onclick = addToNotebook;
   $('#wipe').oninput = e => { S.wipe = +e.target.value; applyWipe(); };
+  $$('[data-preset]').forEach(b => b.onclick = () => {
+    const p = b.dataset.preset;
+    S.wipe = p === 'photo' ? 100 : p === 'retyped' ? 0 : 50;
+    $('#wipe').value = S.wipe;
+    applyWipe();
+  });
+  $('#zin').onclick = () => setZoom(S.zoom * 1.3, undefined, undefined, true);
+  $('#zout').onclick = () => setZoom(S.zoom / 1.3, undefined, undefined, true);
+  $('#zpct').onclick = $('#zfit').onclick = () => setZoom(1, undefined, undefined, true);
   $('#discard').onclick = () => { S.draft = clone(S.note.page); S.dirty = false; S.sel = S.from = null; S.preview = null; renderAll(); };
   $('#save').onclick = saveDraft;
   wireViewer();
@@ -614,7 +679,7 @@ function waitingPage(note) {
     const msg = failed ? esc(n.error || 'This photo could not be read.') + (gem ? ' Try again, or hand it to your Mac.' : ' Try again, or add a clearer photo.')
       : reading ? 'Gemini is reading this page. It usually takes under half a minute, and it shows up here when it is done.'
       : n.unsent ? 'This photo is saved on this device. It uploads as soon as you are back online, and then your Mac reads it.'
-      : mac.online ? 'Your Mac is reading this page. It shows up here when it is done.'
+      : mac.online ? 'Your Mac is reading this page with Gemini. It shows up here when it is done.'
       : `Your Mac is off, so this page is waiting${mac.seen ? ` (it was last on ${ago(mac.seen)})` : ''}. It gets read as soon as the Mac is on. Nothing is lost.`;
     app.innerHTML = `
       <div class="note-head">
@@ -627,7 +692,7 @@ function waitingPage(note) {
         </div>
       </div>
       <div class="note-grid">
-        <section class="page-col" aria-label="The photo"><div class="frame"><div class="viewer"><img class="ph" alt="Photo of your handwritten page" ${photoAttr(id)}></div></div></section>
+        <section class="page-col" aria-label="The photo"><div class="frame"><div class="viewer"><div class="viewer-stage" id="viewerStage"><img class="ph" alt="Photo of your handwritten page" ${photoAttr(id)}></div></div></div></section>
         <section class="sense-col"><div class="nw-card nw-card--soft notice" style="--nw-s:var(--${failed ? 'blush' : 'sky'}-soft)">${ico(failed ? 'triangle-alert' : 'info', { size: 22 })}<p>${msg}</p></div></section>
       </div>`;
     $('#delBtn').onclick = () => deleteNote(id);
@@ -645,19 +710,19 @@ function waitingPage(note) {
   paint(note);
   live(['pages', 'mac'], refresh);
 }
-function renderAll() { renderMeta(); renderModebar(); renderNotices(); renderViewer(); renderTools(); renderInspector(); renderSense(); renderSavebar(); }
+function renderAll() { renderMeta(); renderModebar(); renderNotices(); renderViewer(); renderTools(); renderInspector(); renderSense(); renderSavebar(); renderFloatInspector(); }
 function renderMeta() { $('#metaLine').textContent = label(fmtDate(S.note.created), 'Read by ' + (S.note.source === 'gemini' ? 'Gemini' : 'Apple Vision'), S.note.read_cost); }
 
 function renderModebar() {
   const fix = S.mode === 'fix', tools = [['select', 'Select', 'crosshair'], ['add', 'Add word', 'plus'], ['arrow', 'Draw arrow', 'arrow-right']];
   $('#modebar').innerHTML = `
     <div class="nw-seg" role="radiogroup" aria-label="Mode">
-      <button type="button" role="radio" class="nw-seg__opt" data-mode="view" aria-checked="${!fix}">${ico('book-open', { size: 20 })}<span>Read</span></button>
-      <button type="button" role="radio" class="nw-seg__opt" data-mode="fix" aria-checked="${fix}">${ico('pen-line', { size: 20 })}<span>Fix readings</span></button>
+      <button type="button" role="radio" class="nw-seg__opt" data-mode="view" aria-checked="${!fix}" title="Read mode (V)">${ico('book-open', { size: 20 })}<span>Read</span></button>
+      <button type="button" role="radio" class="nw-seg__opt" data-mode="fix" aria-checked="${fix}" title="Fix readings mode (F)">${ico('pen-line', { size: 20 })}<span>Fix readings</span></button>
     </div>
     ${fix ? `<div class="nw-seg nw-seg--sm" role="radiogroup" aria-label="Tool">${tools.map(([id, l, i]) =>
-      `<button type="button" role="radio" class="nw-seg__opt" data-tool="${id}" aria-checked="${S.tool === id}">${ico(i, { size: 16 })}<span>${l}</span></button>`).join('')}</div>
-    <span class="tool-status">${S.tool === 'add' ? 'Drag a box around the word.' : S.tool === 'arrow' ? (S.from ? 'Now click where it points.' : 'Click where the arrow starts.') : ''}</span>` : ''}`;
+      `<button type="button" role="radio" class="nw-seg__opt" data-tool="${id}" aria-checked="${S.tool === id}" title="${l}">${ico(i, { size: 16 })}<span>${l}</span></button>`).join('')}</div>
+    <span class="tool-status">${S.tool === 'add' ? 'Drag a box around the word.' : S.tool === 'arrow' ? (S.from ? 'Now click where it points.' : 'Click where the arrow starts.') : S.sel ? 'Fix what it read in the card or inspector.' : 'Click a box to fix, or drag to pan.'}</span>` : ''}`;
   $$('[data-mode]', $('#modebar')).forEach(b => b.onclick = () => {
     S.mode = b.dataset.mode; S.tool = 'select'; S.from = S.sel = null;
     S.wipe = S.mode === 'fix' ? 100 : 50; $('#wipe').value = S.wipe;
@@ -674,28 +739,264 @@ function renderNotices() {
   if (!n.sure) out.push(notice('tangerine', 'triangle-alert', 'The page was turned so the text reads left to right. If it landed upside down, rotate it.',
     '<button class="nw-btn nw-btn--secondary nw-btn--sm" id="rot1" type="button">Rotate</button>'));
   (n.engine_notes || []).forEach(t => out.push(notice('sky', 'info', esc(t))));
-  if (n.source === 'vision' && !n.page.links.length && S.mode === 'view') out.push(notice('sky', 'info', 'Apple Vision reads words only, so no arrows came through. Switch to <b>Fix readings</b> and draw the ones you want.'));
+  if (n.source === 'vision' && !n.page.links.length && S.mode === 'view') out.push(notice('sky', 'info', 'This legacy page was read with Apple Vision (words only). Switch to <b>Fix readings</b> to draw arrows.'));
   $('#notices').innerHTML = out.join('');
   const r = $('#rot1'); if (r) r.onclick = () => reread({ rotate: true });
 }
 
+function updateViewerTransform(animate = false) {
+  const stage = $('#viewerStage');
+  if (!stage) return;
+  stage.style.transition = animate ? 'transform var(--dur) var(--ease-out)' : 'none';
+  stage.style.transform = `translate(${S.pan.x}px, ${S.pan.y}px) scale(${S.zoom})`;
+  const pct = $('#zpct');
+  if (pct) pct.textContent = Math.round(S.zoom * 100) + '%';
+  const v = $('#viewer');
+  if (v) v.classList.toggle('zoomed', S.zoom > 1.05);
+  positionFloat();
+}
+function clampPan() {
+  const v = $('#viewer');
+  if (!v || S.zoom <= 1.01) { S.pan = { x: 0, y: 0 }; return; }
+  const vw = v.clientWidth, vh = v.clientHeight;
+  const sw = vw * S.zoom, sh = vh * S.zoom;
+  const minX = vw - sw, minY = vh - sh;
+  S.pan.x = Math.min(0, Math.max(minX, S.pan.x));
+  S.pan.y = Math.min(0, Math.max(minY, S.pan.y));
+}
+function setZoom(z, cx, cy, animate = false) {
+  const v = $('#viewer');
+  if (!v) return;
+  const oldZoom = S.zoom;
+  const newZoom = Math.min(4, Math.max(1, z));
+  if (Math.abs(newZoom - oldZoom) < 0.001) return;
+  if (cx === undefined || cy === undefined) {
+    cx = v.clientWidth / 2;
+    cy = v.clientHeight / 2;
+  }
+  const stageX = (cx - S.pan.x) / oldZoom;
+  const stageY = (cy - S.pan.y) / oldZoom;
+  S.zoom = newZoom;
+  if (newZoom <= 1.01) {
+    S.zoom = 1;
+    S.pan = { x: 0, y: 0 };
+  } else {
+    S.pan.x = cx - stageX * newZoom;
+    S.pan.y = cy - stageY * newZoom;
+    clampPan();
+  }
+  updateViewerTransform(animate);
+}
+function ensureBoxInView(id) {
+  if (S.zoom <= 1.05) return;
+  const el = S.draft.elements.find(x => x.id === id);
+  const v = $('#viewer');
+  if (!el || !v) return;
+  const [pw, ph] = S.draft.page_size;
+  const [x, y, w, h] = el.bbox;
+  const vw = v.clientWidth, vh = v.clientHeight;
+  const normCenterX = (x + w / 2) / pw;
+  const normCenterY = (y + h / 2) / ph;
+  S.pan.x = vw / 2 - normCenterX * vw * S.zoom;
+  S.pan.y = vh / 2 - normCenterY * vh * S.zoom;
+  clampPan();
+  updateViewerTransform(true);
+}
+
+function selectElement(id) {
+  S.sel = id;
+  renderOverlay();
+  renderFloatInspector();
+  renderInspector();
+  ensureBoxInView(id);
+}
+
+function positionFloat() {
+  const fl = $('#noteFloat');
+  if (!fl || fl.hidden || !S.sel) return;
+  const bx = $(`#ovl .bx[data-id="${CSS.escape(S.sel)}"]`);
+  const v = $('#viewer');
+  if (!bx || !v) { fl.hidden = true; return; }
+  const b = bx.getBoundingClientRect();
+  const vr = v.getBoundingClientRect();
+  const fw = fl.offsetWidth || 280;
+  const fh = fl.offsetHeight || 140;
+  const bxLeft = b.left - vr.left;
+  const bxTop = b.top - vr.top;
+  const bxBottom = b.bottom - vr.top;
+  let top = bxTop - fh - 10;
+  if (top < 8) {
+    top = bxBottom + 10;
+    if (top + fh > vr.height - 8) {
+      top = Math.max(8, Math.min(vr.height - fh - 8, bxTop));
+    }
+  }
+  let left = bxLeft + (b.width - fw) / 2;
+  left = Math.max(8, Math.min(vr.width - fw - 8, left));
+  fl.style.left = left + 'px';
+  fl.style.top = top + 'px';
+}
+
+function renderFloatInspector() {
+  const fl = $('#noteFloat');
+  if (!fl) return;
+  if (S.mode !== 'fix' || !S.sel) {
+    fl.hidden = true;
+    fl.innerHTML = '';
+    return;
+  }
+  const els = S.draft.elements;
+  const e = els.find(x => x.id === S.sel);
+  if (!e) {
+    fl.hidden = true;
+    fl.innerHTML = '';
+    return;
+  }
+  const textEls = els.filter(x => x.type === 'text');
+  const textIdx = textEls.findIndex(x => x.id === e.id);
+  const hasPrev = textIdx > 0;
+  const hasNext = textIdx >= 0 && textIdx < textEls.length - 1;
+  const links = S.draft.links.filter(l => l.from === e.id || l.to === e.id);
+  const arrowSummary = links.length ? plural(links.length, 'arrow') : 'No arrows';
+  const typeIcon = e.type === 'text' ? 'type' : e.type === 'shape' ? 'square-dashed' : 'pencil';
+  const typeLabel = e.type === 'text' ? 'Words' : e.type === 'shape' ? 'Shape' : 'Drawing';
+
+  fl.innerHTML = `
+    <div class="note-float-head">
+      <span class="note-float-title">${ico(typeIcon, { size: 16 })} <span>${typeLabel}</span> <span class="nw-badge nw-badge--neutral nw-badge--count">${esc(e.id)}</span></span>
+      <div class="note-float-nav">
+        <button class="nw-ib nw-ib--ghost nw-ib--sm" id="floatPrev" type="button" aria-label="Previous word (Shift+Tab)" title="Previous word (Shift+Tab)" ${!hasPrev ? 'disabled' : ''}>${ico('chevron-left', { size: 16 })}</button>
+        <button class="nw-ib nw-ib--ghost nw-ib--sm" id="floatNext" type="button" aria-label="Next word (Tab)" title="Next word (Tab)" ${!hasNext ? 'disabled' : ''}>${ico('chevron-right', { size: 16 })}</button>
+        <button class="nw-ib nw-ib--ghost nw-ib--sm" id="floatClose" type="button" aria-label="Close (Escape)" title="Close (Escape)">${ico('x', { size: 16 })}</button>
+      </div>
+    </div>
+    ${e.type === 'text' ? `
+      <div class="note-float-input-box">
+        <input class="note-float-input" id="floatEditText" type="text" value="${esc(e.text || '')}" placeholder="Type what you wrote" aria-label="Text for ${esc(e.id)}">
+      </div>
+    ` : ''}
+    <div class="note-float-actions">
+      ${e.type === 'text' ? `
+        <button type="button" class="nw-chip nw-chip--sm${e.underline ? ' nw-chip--on' : ''}" id="floatUl" aria-pressed="${!!e.underline}" title="Toggle Underline (U)">Underlined</button>
+        <button type="button" class="nw-chip nw-chip--sm${e.caps ? ' nw-chip--on' : ''}" id="floatCp" aria-pressed="${!!e.caps}" title="Toggle Capitals (C)">Capitals</button>
+      ` : ''}
+      <select class="sel" id="floatEtype" aria-label="Treat this as">
+        <option value="text"${e.type === 'text' ? ' selected' : ''}>Words</option>
+        <option value="shape"${e.type === 'shape' ? ' selected' : ''}>Shape around words</option>
+        <option value="doodle"${e.type === 'doodle' ? ' selected' : ''}>Drawing</option>
+      </select>
+      <button type="button" class="nw-btn nw-btn--ghost nw-btn--sm" id="floatDel" title="Delete (Delete)">${ico('trash-2', { size: 16, cls: 'nw-btn__icon' })}<span>Remove</span></button>
+    </div>
+    <div class="note-float-links">
+      <span>${arrowSummary}</span>
+      <button type="button" class="nw-btn nw-btn--ghost nw-btn--sm" id="floatAddArrow" title="Draw arrow from this word">${ico('arrow-right', { size: 14, cls: 'nw-btn__icon' })}<span>Draw arrow</span></button>
+    </div>`;
+
+  fl.hidden = false;
+  positionFloat();
+
+  $('#floatClose').onclick = () => { S.sel = null; renderOverlay(); renderFloatInspector(); renderInspector(); };
+  const prevBtn = $('#floatPrev'); if (prevBtn) prevBtn.onclick = () => { if (hasPrev) selectElement(textEls[textIdx - 1].id); };
+  const nextBtn = $('#floatNext'); if (nextBtn) nextBtn.onclick = () => { if (hasNext) selectElement(textEls[textIdx + 1].id); };
+
+  const inp = $('#floatEditText');
+  if (inp) {
+    inp.oninput = () => {
+      e.text = inp.value;
+      touch();
+      const tag = $(`#ovl .bx[data-id="${CSS.escape(e.id)}"] .tag-t`);
+      if (tag) tag.textContent = inp.value || '…';
+      const bottomInput = $('#editText');
+      if (bottomInput) bottomInput.value = inp.value;
+    };
+    inp.onkeydown = ev => {
+      if (ev.key === 'Enter') {
+        ev.preventDefault();
+        if (hasNext) selectElement(textEls[textIdx + 1].id);
+        else inp.blur();
+      } else if (ev.key === 'Tab') {
+        ev.preventDefault();
+        if (ev.shiftKey && hasPrev) selectElement(textEls[textIdx - 1].id);
+        else if (!ev.shiftKey && hasNext) selectElement(textEls[textIdx + 1].id);
+      } else if (ev.key === 'Escape') {
+        ev.preventDefault();
+        S.sel = null; renderOverlay(); renderFloatInspector(); renderInspector();
+      }
+    };
+    setTimeout(() => { inp.focus(); inp.select(); }, 0);
+  }
+
+  const ul = $('#floatUl'), cp = $('#floatCp');
+  if (ul) ul.onclick = () => {
+    e.underline = !e.underline;
+    ul.setAttribute('aria-pressed', e.underline);
+    ul.classList.toggle('nw-chip--on', e.underline);
+    touch();
+    renderInspector();
+  };
+  if (cp) cp.onclick = () => {
+    e.caps = !e.caps;
+    cp.setAttribute('aria-pressed', e.caps);
+    cp.classList.toggle('nw-chip--on', e.caps);
+    touch();
+    renderInspector();
+  };
+
+  $('#floatEtype').onchange = ev => {
+    e.type = ev.target.value;
+    if (e.type === 'shape') recontain(e); else delete e.contains;
+    if (e.type !== 'text') { delete e.underline; delete e.caps; } else if (e.text === undefined) e.text = '';
+    touch(); renderOverlay(); renderFloatInspector(); renderInspector();
+  };
+
+  $('#floatDel').onclick = () => removeElement(e.id);
+  $('#floatAddArrow').onclick = () => {
+    S.tool = 'arrow';
+    S.from = e.id;
+    fl.hidden = true;
+    renderModebar(); renderOverlay(); renderInspector();
+    toast('Now click where the arrow points.', { icon: 'arrow-right' });
+  };
+}
+
 function renderViewer() {
   const v = $('#viewer'), n = S.note, fix = S.mode === 'fix';
-  v.className = 'viewer' + (fix ? ' fix' : '') + (fix && S.tool === 'add' ? ' adding' : '');
+  v.className = 'viewer' + (fix ? ' fix' : '') + (fix && S.tool === 'add' ? ' adding' : '') + (S.zoom > 1.05 ? ' zoomed' : '');
   if (!v.dataset.built || v.dataset.v !== String(S.photoV)) {
     v.dataset.built = 1; v.dataset.v = S.photoV;
-    v.innerHTML = `<img class="ph" alt="Photo of your handwritten page" ${photoAttr(n.id, S.photoV)}>
-      <div class="typed" id="typed"></div><div class="rule" id="rule"></div><div class="ovl" id="ovl"></div>`;
+    v.innerHTML = `
+      <div class="viewer-stage" id="viewerStage">
+        <img class="ph" alt="Photo of your handwritten page" ${photoAttr(n.id, S.photoV)}>
+        <div class="typed" id="typed"></div><div class="rule" id="rule"></div><div class="ovl" id="ovl"></div>
+      </div>
+      <div class="note-float" id="noteFloat" hidden></div>`;
   }
   $('#typed').innerHTML = (S.preview || n).clean_html;
   applyWipe();
   renderOverlay();
+  updateViewerTransform(false);
+  renderFloatInspector();
 }
 function applyWipe() {
   const w = S.wipe;
   $('#typed').style.clipPath = `inset(0 0 0 ${w}%)`;
   $('#typed').style.display = w >= 100 ? 'none' : '';
-  const rule = $('#rule'); rule.style.left = w + '%'; rule.style.display = (w <= 0 || w >= 100) ? 'none' : '';
+  const rule = $('#rule');
+  if (rule) {
+    rule.style.left = w + '%';
+    rule.style.display = (w <= 0 || w >= 100) ? 'none' : '';
+  }
+  $$('[data-preset]').forEach(s => {
+    const p = s.dataset.preset;
+    const isAct = (p === 'photo' && w >= 99) || (p === 'split' && w >= 40 && w <= 60) || (p === 'retyped' && w <= 1);
+    s.setAttribute('aria-checked', isAct);
+  });
+  const badge = $('#wipeBadge');
+  if (badge) {
+    if (w >= 99) badge.textContent = '100% Photo';
+    else if (w <= 1) badge.textContent = '100% Retyped';
+    else badge.textContent = `${100 - w}% Photo · ${w}% Retyped`;
+  }
 }
 
 function boxOf(e) { const [x, y, w, h] = e.bbox; return { x, y, w, h }; }
@@ -730,52 +1031,239 @@ function highlight(ids) {
 /* --- pointer handling on the photo --- */
 function wireViewer() {
   const v = $('#viewer');
-  let drag = null;
+  let addDrag = null;
+  let panDrag = null;
+  const pointers = new Map();
+  let pinchDist = 0;
+  let pinchZoom = 1;
+
   v.addEventListener('pointerdown', e => {
-    if (S.mode !== 'fix' || !e.target.closest('.ovl')) return;
+    if (e.target.closest('#noteFloat, .note-float, input, textarea, button, select')) return;
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+    if (pointers.size === 2) {
+      if (addDrag) { if (addDrag.ghost) addDrag.ghost.remove(); addDrag = null; }
+      panDrag = null;
+      v.classList.remove('panning');
+      const pts = Array.from(pointers.values());
+      pinchDist = Math.hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y);
+      pinchZoom = S.zoom;
+      return;
+    }
+
     const bx = e.target.closest('.bx');
-    if (S.tool === 'add') {
-      const r = $('#ovl').getBoundingClientRect();
-      drag = { r, x0: (e.clientX - r.left) / r.width, y0: (e.clientY - r.top) / r.height };
-      drag.ghost = document.createElement('div'); drag.ghost.className = 'bx ghost'; $('#ovl').appendChild(drag.ghost);
-      v.setPointerCapture(e.pointerId); e.preventDefault();
-    } else if (S.tool === 'arrow' && bx) {
-      const id = bx.dataset.id;
-      if (!S.from) { S.from = id; } else if (S.from !== id) { addLink(S.from, id); S.from = null; S.tool = 'select'; }
-      renderModebar(); renderOverlay(); renderInspector();
-    } else if (S.tool === 'select') {
-      S.sel = bx ? bx.dataset.id : null; renderOverlay(); renderInspector();
-      if (bx) focusText();
+    if (S.mode === 'fix' && !S.spaceDown && e.button === 0) {
+      if (S.tool === 'add') {
+        const r = $('#ovl').getBoundingClientRect();
+        addDrag = { r, x0: (e.clientX - r.left) / r.width, y0: (e.clientY - r.top) / r.height };
+        addDrag.ghost = document.createElement('div');
+        addDrag.ghost.className = 'bx ghost';
+        $('#ovl').appendChild(addDrag.ghost);
+        v.setPointerCapture(e.pointerId);
+        e.preventDefault();
+        return;
+      }
+      if (S.tool === 'arrow') {
+        if (bx) {
+          const id = bx.dataset.id;
+          if (!S.from) { S.from = id; }
+          else if (S.from !== id) { addLink(S.from, id); S.from = null; S.tool = 'select'; }
+          renderModebar(); renderOverlay(); renderFloatInspector(); renderInspector();
+        }
+        return;
+      }
+      if (S.tool === 'select') {
+        if (bx) {
+          selectElement(bx.dataset.id);
+          return;
+        } else if (S.sel) {
+          S.sel = null;
+          renderOverlay(); renderFloatInspector(); renderInspector();
+        }
+      }
+    }
+
+    // Panning (either in view mode, or holding Space, or zoomed in, or middle-click)
+    if (S.zoom > 1.01 || S.spaceDown || e.button === 1 || S.mode === 'view') {
+      panDrag = { startX: e.clientX, startY: e.clientY, initX: S.pan.x, initY: S.pan.y };
+      v.classList.add('panning');
+      v.setPointerCapture(e.pointerId);
+      e.preventDefault();
     }
   });
+
   v.addEventListener('pointermove', e => {
-    if (!drag) return;
-    const x = Math.min(1, Math.max(0, (e.clientX - drag.r.left) / drag.r.width)), y = Math.min(1, Math.max(0, (e.clientY - drag.r.top) / drag.r.height));
-    Object.assign(drag.ghost.style, { left: Math.min(x, drag.x0) * 100 + '%', top: Math.min(y, drag.y0) * 100 + '%', width: Math.abs(x - drag.x0) * 100 + '%', height: Math.abs(y - drag.y0) * 100 + '%' });
-    drag.x1 = x; drag.y1 = y;
+    if (pointers.has(e.pointerId)) pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+    if (pointers.size === 2 && pinchDist > 0) {
+      const pts = Array.from(pointers.values());
+      const curDist = Math.hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y);
+      const vr = v.getBoundingClientRect();
+      const midX = (pts[0].x + pts[1].x) / 2 - vr.left;
+      const midY = (pts[0].y + pts[1].y) / 2 - vr.top;
+      setZoom(pinchZoom * (curDist / pinchDist), midX, midY, false);
+      return;
+    }
+
+    if (addDrag) {
+      const x = Math.min(1, Math.max(0, (e.clientX - addDrag.r.left) / addDrag.r.width));
+      const y = Math.min(1, Math.max(0, (e.clientY - addDrag.r.top) / addDrag.r.height));
+      Object.assign(addDrag.ghost.style, {
+        left: Math.min(x, addDrag.x0) * 100 + '%',
+        top: Math.min(y, addDrag.y0) * 100 + '%',
+        width: Math.abs(x - addDrag.x0) * 100 + '%',
+        height: Math.abs(y - addDrag.y0) * 100 + '%'
+      });
+      addDrag.x1 = x; addDrag.y1 = y;
+      return;
+    }
+
+    if (panDrag) {
+      S.pan.x = panDrag.initX + (e.clientX - panDrag.startX);
+      S.pan.y = panDrag.initY + (e.clientY - panDrag.startY);
+      clampPan();
+      updateViewerTransform(false);
+    }
   });
-  v.addEventListener('pointerup', () => {
-    if (!drag) return;
-    const d = drag; drag = null; d.ghost.remove();
-    if (d.x1 === undefined || Math.abs(d.x1 - d.x0) < 0.01 || Math.abs(d.y1 - d.y0) < 0.008) return;
-    const [pw, ph] = S.draft.page_size;
-    addElement({ type: 'text', text: '', bbox: [Math.min(d.x0, d.x1) * pw, Math.min(d.y0, d.y1) * ph, Math.abs(d.x1 - d.x0) * pw, Math.abs(d.y1 - d.y0) * ph], underline: false, caps: false });
+
+  const onPointerEnd = e => {
+    pointers.delete(e.pointerId);
+    if (pointers.size < 2) pinchDist = 0;
+    v.classList.remove('panning');
+
+    if (addDrag) {
+      const d = addDrag; addDrag = null;
+      if (d.ghost) d.ghost.remove();
+      if (d.x1 !== undefined && Math.abs(d.x1 - d.x0) >= 0.01 && Math.abs(d.y1 - d.y0) >= 0.008) {
+        const [pw, ph] = S.draft.page_size;
+        addElement({
+          type: 'text', text: '',
+          bbox: [Math.min(d.x0, d.x1) * pw, Math.min(d.y0, d.y1) * ph, Math.abs(d.x1 - d.x0) * pw, Math.abs(d.y1 - d.y0) * ph],
+          underline: false, caps: false
+        });
+      }
+    }
+    panDrag = null;
+  };
+  v.addEventListener('pointerup', onPointerEnd);
+  v.addEventListener('pointercancel', onPointerEnd);
+
+  v.addEventListener('wheel', e => {
+    if (e.ctrlKey || e.metaKey || S.spaceDown) {
+      e.preventDefault();
+      const r = v.getBoundingClientRect();
+      const factor = Math.exp(-e.deltaY * 0.005);
+      setZoom(S.zoom * factor, e.clientX - r.left, e.clientY - r.top, false);
+    } else if (S.zoom > 1.01) {
+      e.preventDefault();
+      S.pan.x -= e.deltaX;
+      S.pan.y -= e.deltaY;
+      clampPan();
+      updateViewerTransform(false);
+    }
+  }, { passive: false });
+
+  v.addEventListener('dblclick', e => {
+    if (e.target.closest('#noteFloat, .note-float, input, textarea, button, select')) return;
+    const r = v.getBoundingClientRect();
+    if (S.zoom > 1.1) setZoom(1, undefined, undefined, true);
+    else setZoom(2.2, e.clientX - r.left, e.clientY - r.top, true);
   });
 }
+
 document.addEventListener('keydown', e => {
   if (!S.note || !$('#viewer')) return;
-  if (e.key === 'Escape' && S.mode === 'fix' && !$('.nw-sheet')) { S.from = null; S.tool = 'select'; S.sel = null; renderModebar(); renderOverlay(); renderInspector(); }
-  if ((e.metaKey || e.ctrlKey) && e.key === 's' && S.dirty) { e.preventDefault(); saveDraft(); }
+  if ($('.nw-sheet')) return;
+  const inField = e.target.closest('input, textarea, select, [contenteditable]');
+  const mod = e.metaKey || e.ctrlKey;
+
+  if (mod && e.key === 's') {
+    if (S.dirty) { e.preventDefault(); saveDraft(); }
+    return;
+  }
+
+  if (e.key === 'Escape') {
+    if (S.mode === 'fix') {
+      if (inField) { e.target.blur(); return; }
+      if (S.sel) { S.sel = null; renderOverlay(); renderFloatInspector(); renderInspector(); return; }
+      if (S.tool !== 'select') { S.tool = 'select'; S.from = null; renderModebar(); renderViewer(); return; }
+      S.mode = 'view'; renderAll(); return;
+    }
+    return;
+  }
+
+  if (!inField) {
+    if (e.key === ' ') {
+      e.preventDefault();
+      S.spaceDown = true;
+      $('#viewer')?.classList.add('zoomed');
+    } else if (e.key === '1') {
+      e.preventDefault(); S.wipe = 100; $('#wipe').value = 100; applyWipe();
+    } else if (e.key === '2') {
+      e.preventDefault(); S.wipe = 50; $('#wipe').value = 50; applyWipe();
+    } else if (e.key === '3') {
+      e.preventDefault(); S.wipe = 0; $('#wipe').value = 0; applyWipe();
+    } else if (e.key === '+' || e.key === '=') {
+      e.preventDefault(); setZoom(S.zoom * 1.25, undefined, undefined, true);
+    } else if (e.key === '-') {
+      e.preventDefault(); setZoom(S.zoom / 1.25, undefined, undefined, true);
+    } else if (e.key === '0') {
+      e.preventDefault(); setZoom(1, undefined, undefined, true);
+    } else if (e.key.toLowerCase() === 'v') {
+      e.preventDefault(); S.mode = 'view'; S.tool = 'select'; S.sel = null; S.wipe = 50; $('#wipe').value = 50; renderAll();
+    } else if (e.key.toLowerCase() === 'f' || e.key.toLowerCase() === 'e') {
+      e.preventDefault(); S.mode = 'fix'; S.tool = 'select'; S.wipe = 100; $('#wipe').value = 100; renderAll();
+    } else if (S.mode === 'fix') {
+      if (e.key.toLowerCase() === 's') {
+        e.preventDefault(); S.tool = 'select'; S.from = null; renderModebar(); renderViewer();
+      } else if (e.key.toLowerCase() === 'a') {
+        e.preventDefault(); S.tool = 'add'; S.from = null; renderModebar(); renderViewer();
+      } else if (e.key.toLowerCase() === 'w' || e.key.toLowerCase() === 'r') {
+        e.preventDefault(); S.tool = 'arrow'; S.from = null; renderModebar(); renderViewer();
+      } else if (e.key === 'Tab') {
+        e.preventDefault();
+        const textEls = S.draft.elements.filter(x => x.type === 'text');
+        if (textEls.length) {
+          const idx = textEls.findIndex(x => x.id === S.sel);
+          const next = e.shiftKey ? (idx <= 0 ? textEls.length - 1 : idx - 1) : (idx < 0 || idx >= textEls.length - 1 ? 0 : idx + 1);
+          selectElement(textEls[next].id);
+        }
+      } else if (S.sel) {
+        const el = S.draft.elements.find(x => x.id === S.sel);
+        if (el) {
+          if (e.key === 'Delete' || e.key === 'Backspace') {
+            e.preventDefault();
+            removeElement(el.id);
+          } else if (e.key.toLowerCase() === 'u') {
+            e.preventDefault();
+            el.underline = !el.underline; touch(); renderOverlay(); renderFloatInspector(); renderInspector();
+          } else if (e.key.toLowerCase() === 'c') {
+            e.preventDefault();
+            el.caps = !el.caps; touch(); renderOverlay(); renderFloatInspector(); renderInspector();
+          } else if (e.key === 'Enter') {
+            e.preventDefault();
+            $('#floatEditText')?.focus();
+          }
+        }
+      }
+    }
+  }
+});
+document.addEventListener('keyup', e => {
+  if (e.key === ' ') {
+    S.spaceDown = false;
+    if (S.zoom <= 1) $('#viewer')?.classList.remove('zoomed');
+  }
 });
 
 /* --- editing the draft --- */
 function nextId(prefix, list) { let n = 1; const ids = new Set(list.map(x => x.id)); while (ids.has(prefix + n)) n++; return prefix + n; }
 function touch() { S.dirty = true; renderSavebar(); previewSoon(); }
 function addElement(e) {
-  e.id = nextId('u', S.draft.elements); S.draft.elements.push(e); S.sel = e.id; S.tool = 'select'; touch(); renderModebar(); renderOverlay(); renderInspector();
-  focusText();
+  e.id = nextId('u', S.draft.elements); S.draft.elements.push(e); touch(); renderModebar();
+  selectElement(e.id);
 }
-function focusText() { setTimeout(() => { const t = $('#editText'); if (t) { t.focus(); t.select(); } }, 0); }  // after the click's own focus change
+function focusText() { setTimeout(() => { const t = $('#floatEditText') || $('#editText'); if (t) { t.focus(); t.select(); } }, 0); }
 function addLink(from, to) { S.draft.links.push({ id: nextId('m', S.draft.links), kind: 'flow', from, to }); touch(); }
 function recontain(shape) {
   const inside = e => { const [x, y, w, h] = e.bbox, cx = x + w / 2, cy = y + h / 2, [sx, sy, sw, sh] = shape.bbox; return e.id !== shape.id && e.type !== 'shape' && cx >= sx && cx <= sx + sw && cy >= sy && cy <= sy + sh; };
@@ -785,7 +1273,7 @@ function removeElement(id) {
   S.draft.elements = S.draft.elements.filter(e => e.id !== id);
   S.draft.links = S.draft.links.filter(l => l.from !== id && l.to !== id);
   S.draft.elements.forEach(e => { if (e.contains) e.contains = e.contains.filter(c => c !== id); });
-  S.sel = null; touch(); renderOverlay(); renderInspector();
+  S.sel = null; touch(); renderOverlay(); renderFloatInspector(); renderInspector();
 }
 let previewTimer;
 function previewSoon() {
@@ -855,15 +1343,19 @@ function renderInspector() {
     ${links ? `<ul class="arrows">${links}</ul>` : '<p class="hint" style="margin:0">None yet.</p>'}</div>`;
   if (e) {
     const t = $('#editText');
-    if (t) t.oninput = () => { e.text = t.value; touch(); const tag = $(`#ovl .bx[data-id="${CSS.escape(e.id)}"] .tag-t`); if (tag) tag.textContent = t.value || '…'; };
+    if (t) t.oninput = () => {
+      e.text = t.value; touch();
+      const tag = $(`#ovl .bx[data-id="${CSS.escape(e.id)}"] .tag-t`); if (tag) tag.textContent = t.value || '…';
+      const fl = $('#floatEditText'); if (fl) fl.value = t.value;
+    };
     const ul = $('#ul'), cp = $('#cp');
-    if (ul) ul.onclick = () => { e.underline = !e.underline; ul.setAttribute('aria-pressed', e.underline); ul.classList.toggle('nw-chip--on', e.underline); touch(); };
-    if (cp) cp.onclick = () => { e.caps = !e.caps; cp.setAttribute('aria-pressed', e.caps); cp.classList.toggle('nw-chip--on', e.caps); touch(); };
+    if (ul) ul.onclick = () => { e.underline = !e.underline; ul.setAttribute('aria-pressed', e.underline); ul.classList.toggle('nw-chip--on', e.underline); touch(); renderFloatInspector(); };
+    if (cp) cp.onclick = () => { e.caps = !e.caps; cp.setAttribute('aria-pressed', e.caps); cp.classList.toggle('nw-chip--on', e.caps); touch(); renderFloatInspector(); };
     $('#etype').onchange = ev => {
       e.type = ev.target.value;
       if (e.type === 'shape') recontain(e); else delete e.contains;
       if (e.type !== 'text') { delete e.underline; delete e.caps; } else if (e.text === undefined) e.text = '';
-      touch(); renderOverlay(); renderInspector();
+      touch(); renderOverlay(); renderFloatInspector(); renderInspector();
     };
     $('#del').onclick = () => removeElement(e.id);
   }
@@ -981,10 +1473,21 @@ function renderSense() {
   const col = $('#senseCol');
   col.onmouseover = e => { const li = e.target.closest('[data-ids]'); highlight(li ? li.dataset.ids.split(' ') : []); };
   col.onmouseleave = () => highlight([]);
+  let colHlTimer;
   col.onclick = e => {
-    const li = e.target.closest('[data-ids]'); if (!li || S.mode !== 'fix') return;
-    const ids = li.dataset.ids.split(' '); S.sel = ids.find(i => (S.draft.elements.find(x => x.id === i) || {}).type === 'text') || ids[0];
-    S.tool = 'select'; renderModebar(); renderOverlay(); renderInspector();
+    const li = e.target.closest('[data-ids]'); if (!li) return;
+    const ids = li.dataset.ids.split(' ');
+    const targetId = ids.find(i => (S.draft.elements.find(x => x.id === i) || {}).type === 'text') || ids[0];
+    if (S.mode === 'fix') {
+      S.tool = 'select';
+      renderModebar();
+      selectElement(targetId);
+    } else {
+      highlight(ids);
+      ensureBoxInView(targetId);
+      clearTimeout(colHlTimer);
+      colHlTimer = setTimeout(() => highlight([]), 2500);
+    }
   };
 }
 function renderSavebar() { $('#savebar').hidden = !S.dirty; }
